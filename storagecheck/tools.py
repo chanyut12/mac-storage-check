@@ -13,7 +13,8 @@ TOOLS = [
     ("conda: package cache", "conda", ["conda", "clean", "--all", "-y"], None),
     ("pnpm: store ที่ไม่ได้ใช้", "pnpm", ["pnpm", "store", "prune"], None),
     ("npm: cache", "npm", ["npm", "cache", "clean", "--force"], None),
-    ("pip: cache", "pip", ["pip", "cache", "purge"], ["pip", "cache", "info"]),
+    # ใช้ pip ของระบบโดยตรง เพราะ PATH อาจชี้ไปที่ venv ของโปรเจกต์
+    ("pip: cache", "/opt/homebrew/bin/pip3", ["pip3", "cache", "purge"], ["pip3", "cache", "info"]),
 ]
 
 
@@ -32,8 +33,17 @@ def find_binary(name):
     return None
 
 
-def run_cmd(cmd):
-    r = subprocess.run(cmd, capture_output=True, text=True)
+BREW_UPGRADE_TIMEOUT = 30 * 60
+
+
+def run_cmd(cmd, timeout=None, stdout_only=False):
+    """รันคำสั่งโดยไม่รับ stdin เพื่อให้คำสั่งที่ขอรหัสผ่านล้มเหลวทันที (ไม่ค้าง)"""
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, stdin=subprocess.DEVNULL, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return -1, f"หมดเวลาหลัง {timeout} วินาที"
+    if stdout_only:
+        return r.returncode, r.stdout.strip()
     return r.returncode, (r.stdout + r.stderr).strip()
 
 
@@ -70,17 +80,24 @@ def mode_tools(apply):
         print("(เครื่องมือนี้ไม่ลบโมเดลของ ollama ให้ใช้ `ollama rm <ชื่อ>` เอง)")
 
 
-def mode_brew_upgrade(apply):
-    """แสดงแพ็กเกจ Homebrew ที่ล้าสมัย และอัปเดตเมื่อ apply=True (ไม่ลบไฟล์ผู้ใช้)"""
+def brew_upgrade(apply):
+    """คืนข้อความผลและจำนวนแพ็กเกจที่ล้าสมัย ถ้า apply=True จะรัน brew upgrade (ไม่ลบไฟล์ผู้ใช้)"""
     exe = find_binary("brew")
     if not exe:
-        print("ไม่พบคำสั่ง brew")
-        return
-    _, out = run_cmd([exe, "outdated"])
-    print(out[:3000] if out else "ไม่มีแพ็กเกจที่ต้องอัปเดต")
+        return "ไม่พบคำสั่ง brew", 0
+    # stdout เท่านั้น เพราะ brew พิมพ์ "==>" ลง stderr ตอนอัปเดตข้อมูลก่อน
+    _, out = run_cmd([exe, "outdated"], stdout_only=True)
+    count = len(out.splitlines())
+    if not count:
+        return "ไม่มีแพ็กเกจที่ต้องอัปเดต", 0
     if not apply:
-        print(f"[dry-run] จะรัน: {exe} upgrade")
-        return
-    code, out = run_cmd([exe, "upgrade"])
-    print(out[-1500:] if out else "(ไม่มีผลลัพธ์)")
-    print("อัปเดตสำเร็จ" if code == 0 else f"อัปเดตไม่สำเร็จ (รหัส {code})")
+        return f"{out[:3000]}\n[dry-run] จะรัน: {exe} upgrade", count
+    code, out = run_cmd([exe, "upgrade"], timeout=BREW_UPGRADE_TIMEOUT)
+    text = out[-1500:] if out else "(ไม่มีผลลัพธ์)"
+    status = "อัปเดตสำเร็จ" if code == 0 else f"อัปเดตไม่สำเร็จ (รหัส {code})"
+    return f"{text}\n{status}", count
+
+
+def mode_brew_upgrade(apply):
+    text, _ = brew_upgrade(apply)
+    print(text)

@@ -19,7 +19,7 @@ from pathlib import Path
 
 import scan
 
-PORT = 8765
+PORT = int(os.environ.get("STORAGECHECK_PORT", "8765"))
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 MIME = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
         ".js": "text/javascript; charset=utf-8"}
@@ -147,8 +147,9 @@ def api_tools(body):
 
 
 def api_brew_upgrade(body):
-    """แพ็กเกจ Homebrew ที่ล้าสมัย หรืออัปเดตเมื่อส่ง apply: true"""
-    return {"output": capture(scan.mode_brew_upgrade, bool(body.get("apply")))}
+    """แพ็กเกจ Homebrew ที่ล้าสมัย หรืออัปเดตเมื่อส่ง apply: true (ไม่ล็อกเซิร์ฟเวอร์ระหว่างรอ)"""
+    text, count = scan.brew_upgrade(bool(body.get("apply")))
+    return {"output": text, "outdated": count}
 
 
 def api_cache(_body):

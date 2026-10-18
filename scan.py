@@ -18,7 +18,7 @@ from storagecheck.config import HOME, SNAP_DIR, load_settings, save_settings
 from storagecheck.duplicates import find_duplicates, find_folder_duplicates, keeper
 from storagecheck.history import clear_last_scan, diff_data, list_snapshots, load_last_scan, mode_report, save_last_scan
 from storagecheck.safety import classify, is_never, move_to_trash
-from storagecheck.tools import mode_brew_upgrade, mode_tools
+from storagecheck.tools import brew_upgrade, mode_brew_upgrade, mode_tools
 from storagecheck.walk import cached_rows, clear_index, dir_size, scan
 from storagecheck.cli import main
 

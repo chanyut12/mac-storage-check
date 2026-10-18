@@ -38,7 +38,7 @@ export const toolsSheet = {
       <pre class="out">${esc(tools.output || "(ไม่มีข้อมูล)")}</pre>
       <p><strong>Homebrew: แพ็กเกจที่ล้าสมัย</strong></p>
       <pre class="out">${esc(brew.output || "(ไม่มีข้อมูล)")}</pre>
-      <div class="actions"><button class="btn quiet" id="brew-upgrade-btn">อัปเดตแพ็กเกจ Homebrew</button></div>`;
+      ${brew.outdated ? `<div class="actions"><button class="btn quiet" id="brew-upgrade-btn">อัปเดตแพ็กเกจ Homebrew</button></div>` : ""}`;
     showBrewUpgradeButton();
   },
   action: "เคลียร์ตามที่แสดง",
