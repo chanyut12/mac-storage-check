@@ -4,9 +4,10 @@ import { alertBox } from "./dialog.js";
 
 export const $ = (id) => document.getElementById(id);
 
+/* ใช้หน่วยทศนิยม (1 GB = 10^9 ไบต์) ให้ตรงกับที่ macOS แสดงในหน้า Storage */
 export function fmt(bytes) {
-  if (bytes >= 1024 ** 3) return (bytes / 1024 ** 3).toFixed(1) + " GB";
-  return Math.max(1, Math.round(bytes / 1024 ** 2)) + " MB";
+  if (bytes >= 1e9) return (bytes / 1e9).toFixed(1) + " GB";
+  return Math.max(1, Math.round(bytes / 1e6)) + " MB";
 }
 
 export function esc(s) {
