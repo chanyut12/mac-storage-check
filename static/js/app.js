@@ -5,7 +5,7 @@ import { state } from "./state.js";
 import { openSheet, initSheet } from "./sheet.js";
 import { trashSelected } from "./trash.js";
 import { runScan, loadLast } from "./scan.js";
-import { saveReport, compareSelected, loadSnapshots, initCompare } from "./compare.js";
+import { saveReport, compareSelected, weeklySummary, loadSnapshots, initCompare } from "./compare.js";
 import { toolsSheet } from "./tools.js";
 import { openDuplicates, openFolderDuplicates } from "./dups.js";
 import { initBrowser } from "./browse.js";
@@ -52,6 +52,7 @@ $("fdups-btn").onclick = openFolderDuplicates;
 
 $("report-btn").onclick = saveReport;
 $("diff-btn").onclick = compareSelected;
+$("weekly-btn").onclick = weeklySummary;
 
 /* เริ่มต้น: โหลดค่าตั้งค่า ผลสแกนเดิม และรายการ snapshot */
 loadSettings();

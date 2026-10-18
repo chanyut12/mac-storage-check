@@ -36,7 +36,7 @@ function deltaRows(list, sign) {
   </table>`;
 }
 
-function renderDiff(d) {
+export function renderDiff(d) {
   const added = d.added.length
     ? d.added.map(r => `
         <div class="entry">
@@ -64,6 +64,22 @@ export function compareSelected() {
       out.innerHTML = d.ok ? renderDiff(d) : `<div class="empty">${esc(d.message)}</div>`;
     } catch (e) {
       out.innerHTML = `<div class="empty">เทียบไม่สำเร็จ: ${esc(e.message)}</div>`;
+    }
+  });
+}
+
+export async function weeklySummary() {
+  const out = $("diff-out");
+  out.hidden = false;
+  return job("กำลังสรุป... ต้องสแกนทั้ง home ใหม่ อาจใช้เวลาหลายนาที", async () => {
+    out.innerHTML = `<div class="empty">กำลังสรุป...</div>`;
+    try {
+      const d = await api("/api/weekly");
+      out.innerHTML = d.ok
+        ? `<p class="note">สรุปเทียบกับเมื่อ ${d.days} วันก่อน</p>${renderDiff(d)}`
+        : `<div class="empty">${esc(d.message)}</div>`;
+    } catch (e) {
+      out.innerHTML = `<div class="empty">สรุปไม่สำเร็จ: ${esc(e.message)}</div>`;
     }
   });
 }

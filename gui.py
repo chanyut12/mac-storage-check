@@ -142,6 +142,17 @@ def api_diff(body):
     return {"ok": True, **data}
 
 
+def api_weekly(_body):
+    """เทียบกับ snapshot ที่เก่ากว่า 7 วัน (ใหม่ที่สุดในกลุ่มนั้น)"""
+    snap = scan.weekly_snapshot()
+    if snap is None:
+        return {"ok": False, "message": "ยังไม่มี snapshot ที่เก่ากว่า 7 วัน กดบันทึกรายงานไว้ตอนนี้ แล้วกลับมาดูสรุปหลังผ่านไป 7 วัน"}
+    with LOCK:
+        data = scan.diff_data(str(snap))
+    days = (datetime.now() - datetime.fromisoformat(data["time"])).days
+    return {"ok": True, "days": days, **data}
+
+
 def api_tools(body):
     return {"output": capture(scan.mode_tools, bool(body.get("apply")))}
 
@@ -230,6 +241,7 @@ ROUTES = {
     "/api/folder_duplicates": api_folder_duplicates,
     "/api/tools": api_tools,
     "/api/brew_upgrade": api_brew_upgrade,
+    "/api/weekly": api_weekly,
     "/api/cache": api_cache,
     "/api/trash": api_trash,
     "/api/reveal": api_reveal,

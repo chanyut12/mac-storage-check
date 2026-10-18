@@ -4,7 +4,7 @@ import csv
 import json
 import shutil
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from .config import CACHE_DIR, HOME, LAST_SCAN, REPORT_DIR, SNAP_DIR, TOP_N, min_size
@@ -102,6 +102,15 @@ def list_snapshots():
             continue
         out.append({"name": p.name, "time": t})
     return out
+
+
+def weekly_snapshot(days=7):
+    """snapshot ที่ใหม่ที่สุดในบรรดาที่มีอายุอย่างน้อย days วัน หรือ None ถ้าไม่มี"""
+    cutoff = datetime.now() - timedelta(days=days)
+    for s in list_snapshots():  # เรียงจากใหม่ไปเก่า
+        if datetime.fromisoformat(s["time"]) <= cutoff:
+            return SNAP_DIR / s["name"]
+    return None
 
 
 def diff_data(snap_path=None):

@@ -3,6 +3,7 @@
 import { $, esc, fmt, shortPath } from "./dom.js";
 import { revealInFinder } from "./api.js";
 import { state } from "./state.js";
+import { exportCsv } from "./export.js";
 
 const selected = new Set();                // การเลือกคงอยู่แม้เปลี่ยนตัวกรอง
 let filter = { kind: null, old: false };   // ตัวกรองที่ใช้อยู่ตอนนี้
@@ -113,6 +114,10 @@ export function initSheet() {
     renderList();
   });
   $("sheet-search").addEventListener("input", renderList);
+  $("sheet-csv").onclick = () => {
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+    exportCsv(visibleItems(), `storage-check-${stamp}.csv`);
+  };
   $("sheet-all").onclick = () => {
     const boxes = [...document.querySelectorAll("#sheet-list input:not(:disabled)")];
     const allOn = boxes.every(b => b.checked);
