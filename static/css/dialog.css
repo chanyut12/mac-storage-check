@@ -15,6 +15,15 @@
 .dlg-actions { display: flex; gap: 10px; justify-content: center; }
 .dlg-actions .btn { flex: 1; padding: 11px 14px; }
 
+.dlg.wide { max-width: 460px; text-align: left; }
+.dlg.wide h3 { margin-bottom: 14px; }
+.pick-list { display: grid; gap: 6px; max-height: 60vh; overflow-y: auto; margin: 0 0 18px; }
+.pick-item { appearance: none; border: 0; background: var(--bg); color: var(--text); font: inherit; text-align: left;
+             border-radius: 12px; padding: 11px 14px; cursor: pointer; display: flex; justify-content: space-between;
+             align-items: baseline; gap: 12px; }
+.pick-item:hover { background: rgba(10,132,255,.1); }
+.pick-item.on { box-shadow: inset 0 0 0 2px var(--accent); }
+.pick-item small { color: var(--muted); font-size: 12px; white-space: nowrap; }
 @keyframes dlg-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes dlg-pop { from { opacity: 0; transform: scale(.94) translateY(6px); } to { opacity: 1; transform: none; } }
 

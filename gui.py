@@ -227,6 +227,15 @@ def api_folder_duplicates(_body):
     return {"items": items}
 
 
+def api_snapshot_delete(body):
+    """ย้าย snapshot หนึ่งไฟล์ไปถังขยะ (รายงาน .md/.csv ไม่ถูกลบ)"""
+    name = body.get("snapshot")
+    if name not in {s["name"] for s in scan.list_snapshots()}:
+        raise ValueError("ไม่พบ snapshot นี้")
+    output = capture(scan.move_to_trash, [str(scan.SNAP_DIR / name)])
+    return {"ok": "ปฏิเสธ" not in output, "output": output}
+
+
 def api_trash(body):
     paths = body.get("paths") or []
     if not paths:
@@ -248,6 +257,7 @@ ROUTES = {
     "/api/tools": api_tools,
     "/api/brew_upgrade": api_brew_upgrade,
     "/api/weekly": api_weekly,
+    "/api/snapshot_delete": api_snapshot_delete,
     "/api/cache": api_cache,
     "/api/trash": api_trash,
     "/api/reveal": api_reveal,

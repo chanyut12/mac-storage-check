@@ -47,6 +47,39 @@ function openDialog({ title, message, tone = "info", buttons, cancelValue }) {
   });
 }
 
+/* กล่องเลือกจากรายการ คืนค่าของรายการที่กด หรือ null ถ้าปิด (ปุ่มปิด, คลิกนอกกล่อง, Esc) */
+export function pickDialog({ title, items, selected = null }) {
+  return new Promise((resolve) => {
+    const wrap = document.createElement("div");
+    wrap.className = "dlg-overlay";
+    wrap.innerHTML = `
+      <div class="dlg wide" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+        <h3 id="dlg-title">${escapeHtml(title)}</h3>
+        <div class="pick-list">${items.map(it => `
+          <button class="pick-item${it.value === selected ? " on" : ""}" data-value="${escapeHtml(it.value)}">
+            <span>${escapeHtml(it.label)}</span><small>${escapeHtml(it.sub || "")}</small>
+          </button>`).join("")}
+        </div>
+        <div class="dlg-actions"><button class="btn quiet" data-close>ปิด</button></div>
+      </div>`;
+    const close = (value) => {
+      document.removeEventListener("keydown", onKey);
+      wrap.classList.add("out");
+      setTimeout(() => wrap.remove(), 160);
+      resolve(value);
+    };
+    const onKey = (e) => { if (e.key === "Escape") close(null); };
+    wrap.addEventListener("click", (e) => {
+      if (e.target === wrap || e.target.closest("[data-close]")) return close(null);
+      const item = e.target.closest(".pick-item");
+      if (item) close(item.dataset.value);
+    });
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(wrap);
+    (wrap.querySelector(".pick-item.on") || wrap.querySelector("[data-close]")).focus();
+  });
+}
+
 export function alertBox(message, { title = "แจ้งให้ทราบ", tone = "info" } = {}) {
   return openDialog({
     title, message, tone, cancelValue: true,

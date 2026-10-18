@@ -83,7 +83,7 @@ body {
 .row-bar .track span { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .select { appearance: none; border: 1px solid var(--line); background: var(--bg); color: var(--text);
-          border-radius: 12px; padding: 9px 12px; font: inherit; max-width: 220px; }
+          border-radius: 12px; padding: 9px 12px; font: inherit; max-width: 280px; }
 .settings { display: grid; gap: 8px; font-size: 14px; }
 .settings input { width: 90px; border: 1px solid var(--line); background: var(--bg); color: var(--text);
                   border-radius: 8px; padding: 4px 8px; font: inherit; }
