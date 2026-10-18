@@ -41,6 +41,7 @@ Items marked ⛔ cannot be selected. Any selected items are moved to the Trash o
 
 - **Largest folders** Click a row to browse its subfolders one level at a time. Click **⬆ Up one level** to go to the parent folder. Click **Exclude** to keep a folder out of future scans.
 - **Save & compare** Save a report, then pick a snapshot to see which folders grew or shrank and which large files are new.
+- **Weekly summary** Compares with the newest snapshot that is at least 7 days old. If there is no snapshot that old yet, press **Save report** first and come back after 7 days.
 - **Settings** Thresholds for large files and duplicates, the number of months after which a file counts as unused, and the excluded folders. Changes apply on the next scan.
 
 ### Common buttons
@@ -48,6 +49,7 @@ Items marked ⛔ cannot be selected. Any selected items are moved to the Trash o
 - **Reveal in Finder** Every row has this button. It opens the file or folder's location so you can check details before deciding. It only works for items inside your home folder and never deletes anything.
 - **Select all** Selects only items that can be moved. Items marked **Kept** cannot be selected.
 - **Filter by type** For example video, archives, data, documents, AI models.
+- **Export CSV** Downloads the rows currently shown (after search and filters) as a CSV file. The file is built in your browser and is not sent anywhere.
 
 > The "not opened for" date uses the time macOS recorded the file was last read. It is an approximation and may not always match your actual use.
 
