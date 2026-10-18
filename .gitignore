@@ -8,3 +8,6 @@ settings.json
 __pycache__/
 *.pyc
 .DS_Store
+
+# บันทึกไอเดียส่วนตัว
+IDEAS.md
