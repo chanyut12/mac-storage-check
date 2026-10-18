@@ -6,9 +6,6 @@ import { state } from "./state.js";
 import { openSheet } from "./sheet.js";
 import { excludeFolder } from "./settings.js";
 
-let trail = [];       // โฟลเดอร์ที่เคยเปิดก่อนหน้า ใช้กดย้อนกลับ
-let current = null;   // โฟลเดอร์ที่กำลังแสดงอยู่
-
 function entryRow(x) {
   const nav = x.is_dir ? ` nav" data-browse="${esc(x.path)}` : "";
   const exclude = x.is_dir
@@ -30,34 +27,19 @@ async function show(path) {
   body.innerHTML = `<div class="empty">กำลังโหลด...</div>`;
   try {
     const d = await api("/api/children", { path });
-    current = d.path;
     const total = d.items.reduce((a, x) => a + x.size, 0);
     $("sheet-title").textContent = shortPath(d.path);
     $("sheet-sub").textContent = `รวม ${fmt(total)} · ${d.items.length} รายการ (แสดงสูงสุด 200)`;
-    const back = trail.length ? `<button class="btn ghost" data-back>← ย้อนกลับ</button>` : "";
     const up = d.parent ? `<button class="btn ghost" data-browse="${esc(d.parent)}">⬆ ขึ้นหนึ่งระดับ</button>` : "";
     body.innerHTML = `
-      <div class="crumb">${back}${up}<span class="muted">${esc(shortPath(d.path))}</span></div>
+      <div class="crumb">${up}<span class="muted">${esc(shortPath(d.path))}</span></div>
       ${d.items.length ? d.items.map(entryRow).join("") : `<div class="empty">โฟลเดอร์ว่าง</div>`}`;
   } catch (e) {
     body.innerHTML = `<div class="empty">เปิดดูไม่ได้: ${esc(e.message)}</div>`;
   }
 }
 
-/* เข้าโฟลเดอร์ใหม่ และจำที่เดิมไว้ให้ย้อนกลับได้ */
-function go(path) {
-  if (current) trail.push(current);
-  return show(path);
-}
-
-function back() {
-  const prev = trail.pop();
-  if (prev) show(prev);
-}
-
 export function openBrowser(path) {
-  trail = [];
-  current = null;
   openSheet({ title: shortPath(path), mode: "text", browse: true, load: () => show(path) });
 }
 
@@ -75,8 +57,7 @@ export function initBrowser() {
     if (rev) return revealInFinder(rev.dataset.reveal);
     const ex = e.target.closest("[data-exclude]");
     if (ex) return excludeFolder(ex.dataset.exclude);
-    if (e.target.closest("[data-back]")) return back();
     const nav = e.target.closest("[data-browse]");
-    if (nav) go(nav.dataset.browse);
+    if (nav) show(nav.dataset.browse);
   });
 }

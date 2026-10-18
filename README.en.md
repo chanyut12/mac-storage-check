@@ -39,7 +39,7 @@ Items marked ⛔ cannot be selected. Any selected items are moved to the Trash o
 
 ### More options
 
-- **Largest folders** Click a row to browse its subfolders one level at a time. Go back with **← Back** or **⬆ Up one level**. Click **Exclude** to keep a folder out of future scans.
+- **Largest folders** Click a row to browse its subfolders one level at a time. Click **⬆ Up one level** to go to the parent folder. Click **Exclude** to keep a folder out of future scans.
 - **Save & compare** Save a report, then pick a snapshot to see which folders grew or shrank and which large files are new.
 - **Settings** Thresholds for large files and duplicates, the number of months after which a file counts as unused, and the excluded folders. Changes apply on the next scan.
 

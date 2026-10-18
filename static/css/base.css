@@ -37,6 +37,7 @@ body {
               border-radius: 999px; transition: width .6s ease; }
 .meter-labels { display: flex; justify-content: space-between; margin-top: 8px;
                 font-size: 13px; color: var(--muted); }
+.disk-note { text-align: left; margin: 12px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
 
 /* ---------- ปุ่มหลัก ---------- */
 .primary { text-align: center; margin: 8px 0 32px; }
