@@ -33,7 +33,7 @@ Scanning the whole home folder can take several minutes. The latest result is sa
 | **Large files** | Review files to check before deleting. Filter by type, or by files not opened for a while. Move the selected files to the Trash |
 | **Duplicate files** | Files with identical contents, byte for byte. The most recently edited copy is always kept |
 | **Duplicate folders** | Folders whose files are all identical. The most recently edited folder is always kept |
-| **Developer tools** | Dry-run output for Docker, Homebrew, conda, pnpm, npm, and pip, then clean what is shown. Docker volumes are never touched. Also has a button to upgrade outdated Homebrew packages |
+| **Developer tools** | Shows the commands that will run for Docker, Homebrew, conda, pnpm, npm, and pip before cleaning. Docker volumes are never touched. Also has a button to upgrade outdated Homebrew packages |
 
 Items marked ⛔ cannot be selected. Any selected items are moved to the Trash only after a confirmation dialog.
 
