@@ -12,6 +12,8 @@ TOOLS = [
     ("Homebrew: cache เก่า", "brew", ["brew", "cleanup", "-s"], ["brew", "cleanup", "-n"]),
     ("conda: package cache", "conda", ["conda", "clean", "--all", "-y"], None),
     ("pnpm: store ที่ไม่ได้ใช้", "pnpm", ["pnpm", "store", "prune"], None),
+    ("npm: cache", "npm", ["npm", "cache", "clean", "--force"], None),
+    ("pip: cache", "pip", ["pip", "cache", "purge"], ["pip", "cache", "info"]),
 ]
 
 
@@ -66,3 +68,19 @@ def mode_tools(apply):
         _, out = run_cmd([ollama, "list"])
         print(out)
         print("(เครื่องมือนี้ไม่ลบโมเดลของ ollama ให้ใช้ `ollama rm <ชื่อ>` เอง)")
+
+
+def mode_brew_upgrade(apply):
+    """แสดงแพ็กเกจ Homebrew ที่ล้าสมัย และอัปเดตเมื่อ apply=True (ไม่ลบไฟล์ผู้ใช้)"""
+    exe = find_binary("brew")
+    if not exe:
+        print("ไม่พบคำสั่ง brew")
+        return
+    _, out = run_cmd([exe, "outdated"])
+    print(out[:3000] if out else "ไม่มีแพ็กเกจที่ต้องอัปเดต")
+    if not apply:
+        print(f"[dry-run] จะรัน: {exe} upgrade")
+        return
+    code, out = run_cmd([exe, "upgrade"])
+    print(out[-1500:] if out else "(ไม่มีผลลัพธ์)")
+    print("อัปเดตสำเร็จ" if code == 0 else f"อัปเดตไม่สำเร็จ (รหัส {code})")

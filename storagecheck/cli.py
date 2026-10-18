@@ -7,7 +7,7 @@ from .config import TOP_N
 from .duplicates import mode_duplicates
 from .history import mode_diff, mode_report
 from .safety import classify
-from .tools import mode_tools
+from .tools import mode_brew_upgrade, mode_tools
 from .util import gb
 from .walk import scan
 
@@ -28,7 +28,7 @@ def main():
         "mode",
         nargs="?",
         default="scan",
-        choices=["scan", "report", "diff", "tools", "clean-cache", "interactive", "duplicates"],
+        choices=["scan", "report", "diff", "tools", "brew-upgrade", "clean-cache", "interactive", "duplicates"],
     )
     ap.add_argument("--yes", action="store_true", help="ทำจริง (ค่าเริ่มต้นคือแสดงอย่างเดียว)")
     args = ap.parse_args()
@@ -41,6 +41,8 @@ def main():
         mode_diff()
     elif args.mode == "tools":
         mode_tools(args.yes)
+    elif args.mode == "brew-upgrade":
+        mode_brew_upgrade(args.yes)
     elif args.mode == "clean-cache":
         mode_clean_cache(args.yes)
     elif args.mode == "interactive":

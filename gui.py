@@ -146,6 +146,11 @@ def api_tools(body):
     return {"output": capture(scan.mode_tools, bool(body.get("apply")))}
 
 
+def api_brew_upgrade(body):
+    """แพ็กเกจ Homebrew ที่ล้าสมัย หรืออัปเดตเมื่อส่ง apply: true"""
+    return {"output": capture(scan.mode_brew_upgrade, bool(body.get("apply")))}
+
+
 def api_cache(_body):
     return {"items": [item(s, str(p)) for s, p in scan.cache_candidates()]}
 
@@ -223,6 +228,7 @@ ROUTES = {
     "/api/diff": api_diff,
     "/api/folder_duplicates": api_folder_duplicates,
     "/api/tools": api_tools,
+    "/api/brew_upgrade": api_brew_upgrade,
     "/api/cache": api_cache,
     "/api/trash": api_trash,
     "/api/reveal": api_reveal,
