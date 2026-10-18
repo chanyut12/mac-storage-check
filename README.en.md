@@ -33,7 +33,7 @@ Scanning the whole home folder can take several minutes. The latest result is sa
 | **Large files** | Review files to check before deleting. Filter by type, or by files not opened for a while. Move the selected files to the Trash |
 | **Duplicate files** | Files with identical contents, byte for byte. The most recently edited copy is always kept |
 | **Duplicate folders** | Folders whose files are all identical. The most recently edited folder is always kept |
-| **Developer tools** | Dry-run output for Docker, Homebrew, conda, and pnpm, then clean what is shown. Docker volumes are never touched |
+| **Developer tools** | Dry-run output for Docker, Homebrew, conda, pnpm, npm, and pip, then clean what is shown. Docker volumes are never touched. Also has a button to upgrade outdated Homebrew packages |
 
 Items marked ⛔ cannot be selected. Any selected items are moved to the Trash only after a confirmation dialog.
 
@@ -62,7 +62,8 @@ python3 scan.py <mode> [--yes]
 | `scan` | Shows the largest files and folders | No |
 | `report` | Saves `reports/report_*.md` and `.csv` plus a snapshot for comparison | No |
 | `diff` | Compares with the latest snapshot and shows what grew and what is new | No |
-| `tools` | Shows or cleans caches for Docker, Homebrew, conda, and pnpm | Only with `--yes` |
+| `tools` | Shows or cleans caches for Docker, Homebrew, conda, pnpm, npm, and pip | Only with `--yes` |
+| `brew-upgrade` | Shows outdated Homebrew packages and runs `brew upgrade` | Only with `--yes` |
 | `clean-cache` | Moves caches larger than the threshold in `~/Library/Caches` and `~/.cache` to the Trash | Only with `--yes` |
 | `interactive` | Pick files by number, then confirm before moving them | Always asks first |
 | `duplicates` | Finds duplicate files of 10 MB or more, shows the groups and the space you can reclaim | Only with `--yes`. Keeps the most recently edited copy |
@@ -121,7 +122,7 @@ storagecheck/
   hashing.py            file hashing with caching and parallel hashing
   duplicates.py         duplicate files and duplicate folders
   history.py            last scan, snapshots, reports, and comparison
-  tools.py              developer tools (Docker, Homebrew, conda, pnpm)
+  tools.py              developer tools (Docker, Homebrew, conda, pnpm, npm, pip)
   cleanup.py            cache cleanup and interactive mode
   cli.py                dispatches CLI modes
 static/                 web UI (HTML, CSS, ES modules)
