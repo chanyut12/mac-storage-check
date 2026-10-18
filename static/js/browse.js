@@ -29,7 +29,8 @@ async function show(path) {
     const d = await api("/api/children", { path });
     const total = d.items.reduce((a, x) => a + x.size, 0);
     $("sheet-title").textContent = shortPath(d.path);
-    $("sheet-sub").textContent = `รวม ${fmt(total)} · ${d.items.length} รายการ (แสดงสูงสุด 200)`;
+    const source = d.indexed ? "ขนาดจากการสแกนล่าสุด" : "คำนวณสด (ยังไม่มีผลสแกน)";
+    $("sheet-sub").textContent = `รวม ${fmt(total)} · ${d.items.length} รายการ (แสดงสูงสุด 200) · ${source}`;
     const up = d.parent ? `<button class="btn ghost" data-browse="${esc(d.parent)}">⬆ ขึ้นหนึ่งระดับ</button>` : "";
     body.innerHTML = `
       <div class="crumb">${up}<span class="muted">${esc(shortPath(d.path))}</span></div>

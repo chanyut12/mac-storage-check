@@ -22,6 +22,32 @@ def dir_size(path):
     return total
 
 
+def scanned_dir_size(path):
+    """ขนาดโฟลเดอร์ตามกฎเดียวกับดัชนี: ข้าม SKIP_DIRS โฟลเดอร์ที่ยกเว้น และ symlink"""
+    excluded = excluded_dirs()
+    total = 0
+    stack = [path]
+    while stack:
+        dirpath = stack.pop()
+        try:
+            with os.scandir(dirpath) as it:
+                entries = list(it)
+        except OSError:
+            continue
+        for e in entries:
+            try:
+                if e.is_symlink():
+                    continue
+                if e.is_dir(follow_symlinks=False):
+                    if e.name not in SKIP_DIRS and e.path not in excluded:
+                        stack.append(e.path)
+                else:
+                    total += e.stat(follow_symlinks=False).st_blocks * 512
+            except OSError:
+                continue
+    return total
+
+
 def iter_files():
     """เดินไฟล์ทั้ง home คืนค่า (path, lstat) ข้ามโฟลเดอร์ของเครื่องมือ SKIP_DIRS และ symlink"""
     base = str(BASE)
@@ -79,6 +105,28 @@ def cached_rows(refresh=False):
 def clear_index():
     """ล้างดัชนี ใช้หลังมีไฟล์ถูกย้ายไปถังขยะ เพื่อไม่ให้ดัชนีค้างข้อมูลเก่า"""
     _index["rows"] = None
+
+
+_dir_sizes = {"rows": None, "sizes": None}
+
+
+def dir_sizes():
+    """ขนาดรวมของทุกโฟลเดอร์ย่อยใน home จากดัชนีล่าสุด คำนวณครั้งเดียวต่อดัชนี
+    คืน None ถ้ายังไม่มีดัชนี (ผู้เรียกต้องเดินโฟลเดอร์เองแทน)"""
+    rows = _index["rows"]
+    if rows is None:
+        return None
+    if _dir_sizes["rows"] is not rows:
+        home = str(HOME)
+        sizes = {}
+        for row in rows:
+            d = os.path.dirname(row[0])
+            while d.startswith(home + os.sep):
+                sizes[d] = sizes.get(d, 0) + row[2]
+                d = os.path.dirname(d)
+        _dir_sizes["rows"] = rows
+        _dir_sizes["sizes"] = sizes
+    return _dir_sizes["sizes"]
 
 
 def scan(atimes=None, rows=None):

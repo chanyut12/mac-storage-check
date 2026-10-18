@@ -173,6 +173,7 @@ def api_children(body):
     path = os.path.realpath(body.get("path") or home)
     if (path != home and not path.startswith(home + os.sep)) or not os.path.isdir(path):
         raise ValueError("เปิดดูไม่ได้: ไม่อยู่ใน home หรือไม่ใช่โฟลเดอร์")
+    sizes = scan.dir_sizes()    # ใช้ดัชนีจากการสแกนล่าสุดถ้ามี จะได้ไม่ต้องเดินโฟลเดอร์ซ้ำทุกคลิก
     rows = []
     for name in os.listdir(path):
         p = os.path.join(path, name)
@@ -183,11 +184,16 @@ def api_children(body):
         except OSError:
             continue
         is_dir = os.path.isdir(p)
-        size = scan.dir_size(p) if is_dir else st.st_blocks * 512
+        if not is_dir:
+            size = st.st_blocks * 512
+        elif sizes is not None:
+            size = sizes.get(p, 0)      # โฟลเดอร์ที่ถูกข้ามตาม SKIP_DIRS หรือยกเว้นจะไม่อยู่ในดัชนี
+        else:
+            size = scan.scanned_dir_size(p)
         rows.append({"name": name, "path": p, "size": size, "is_dir": is_dir})
     rows.sort(key=lambda r: -r["size"])
     return {"path": path, "parent": os.path.dirname(path) if path != home else None,
-            "items": rows[:200]}
+            "items": rows[:200], "indexed": sizes is not None}
 
 
 def api_reveal(body):
