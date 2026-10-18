@@ -1,0 +1,10 @@
+# ไฟล์เฉพาะเครื่อง (มีชื่อไฟล์และข้อมูลการใช้งานของคุณ)
+cache/
+reports/
+snapshots/
+settings.json
+
+# ไฟล์ที่ระบบหรือ Python สร้างขึ้น
+__pycache__/
+*.pyc
+.DS_Store
