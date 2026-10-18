@@ -1,0 +1,155 @@
+"""ผลสแกนล่าสุด, snapshot, รายงาน และการเทียบ snapshot"""
+
+import csv
+import json
+import shutil
+
+from datetime import datetime
+from pathlib import Path
+
+from .config import CACHE_DIR, HOME, LAST_SCAN, REPORT_DIR, SNAP_DIR, TOP_N, min_size
+from .safety import classify
+from .util import gb
+from .walk import scan
+
+
+def save_last_scan(data):
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    LAST_SCAN.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+
+
+def load_last_scan():
+    if not LAST_SCAN.exists():
+        return None
+    try:
+        return json.loads(LAST_SCAN.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def clear_last_scan():
+    LAST_SCAN.unlink(missing_ok=True)
+
+
+def save_snapshot(files, buckets):
+    SNAP_DIR.mkdir(parents=True, exist_ok=True)
+    now = datetime.now()
+    data = {
+        "time": now.isoformat(timespec="seconds"),
+        "buckets": buckets,
+        "files": {p: s for s, p in files},
+    }
+    path = SNAP_DIR / (now.strftime("%Y%m%d_%H%M%S") + ".json")
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def latest_snapshot():
+    if not SNAP_DIR.exists():
+        return None
+    snaps = sorted(SNAP_DIR.glob("*.json"))
+    return snaps[-1] if snaps else None
+
+
+def mode_report():
+    files, buckets = scan()
+    snap = save_snapshot(files, buckets)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    md_path = REPORT_DIR / f"report_{stamp}.md"
+    csv_path = REPORT_DIR / f"report_{stamp}.csv"
+
+    total, used, free = shutil.disk_usage(HOME)
+    sorted_files = sorted(files, reverse=True)
+    sorted_buckets = sorted(buckets.items(), key=lambda x: -x[1])
+
+    lines = [
+        f"# Storage report {datetime.now():%Y-%m-%d %H:%M}",
+        "",
+        f"- ใช้ไป: {gb(used).strip()} / ทั้งหมด {gb(total).strip()} (ว่าง {gb(free).strip()})",
+        f"- ไฟล์ตั้งแต่ {min_size() // 1024**2} MB: {len(files)} ไฟล์",
+        "",
+        f"## ไฟล์ใหญ่สุด {TOP_N} อันดับ",
+        "",
+        "| ขนาด | ประเภท | ไฟล์ |",
+        "|---:|---|---|",
+    ]
+    for size, p in sorted_files[:TOP_N]:
+        lines.append(f"| {gb(size).strip()} | {classify(p)} | `{p.replace('|', chr(92) + '|')}` |")
+    lines += ["", f"## โฟลเดอร์ใหญ่สุด {TOP_N} อันดับ", "", "| ขนาด | โฟลเดอร์ |", "|---:|---|"]
+    for key, size in sorted_buckets[:TOP_N]:
+        lines.append(f"| {gb(size).strip()} | `{key}` |")
+    md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    with csv_path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["size_bytes", "category", "path"])
+        for size, p in sorted_files:
+            w.writerow([size, classify(p), p])
+
+    print(f"บันทึกรายงานแล้ว:\n  {md_path}\n  {csv_path}\n  snapshot: {snap}")
+
+
+def list_snapshots():
+    """รายการ snapshot ที่มี เรียงจากใหม่ไปเก่า"""
+    if not SNAP_DIR.exists():
+        return []
+    out = []
+    for p in sorted(SNAP_DIR.glob("*.json"), reverse=True):
+        try:
+            t = datetime.strptime(p.stem, "%Y%m%d_%H%M%S").isoformat(timespec="seconds")
+        except ValueError:
+            continue
+        out.append({"name": p.name, "time": t})
+    return out
+
+
+def diff_data(snap_path=None):
+    """เทียบกับ snapshot (ค่าเริ่มต้นคือล่าสุด) คืนค่าโครงสร้างข้อมูล หรือ None ถ้าไม่มี snapshot"""
+    snap = Path(snap_path) if snap_path else latest_snapshot()
+    if snap is None:
+        return None
+    old = json.loads(snap.read_text(encoding="utf-8"))
+    files, buckets = scan()
+    new_files = {p: s for s, p in files}
+
+    delta = []
+    for key in set(old["buckets"]) | set(buckets):
+        d = buckets.get(key, 0) - old["buckets"].get(key, 0)
+        if d:
+            delta.append((d, key))
+    delta.sort(reverse=True)
+
+    added = sorted(((s, p) for p, s in new_files.items() if p not in old["files"]), reverse=True)
+    removed = sum(1 for p in old["files"] if p not in new_files)
+    return {
+        "time": old["time"],
+        "grown": [{"name": k, "delta": d} for d, k in delta if d > 0][:15],
+        "shrunk": [{"name": k, "delta": d} for d, k in delta[::-1] if d < 0][:5],
+        "added": [{"size": s, "path": p} for s, p in added[:50]],
+        "added_total": len(added),
+        "removed": removed,
+    }
+
+
+def mode_diff():
+    data = diff_data()
+    if data is None:
+        print("ยังไม่มี snapshot ให้รัน `python3 scan.py report` ก่อนเพื่อสร้างจุดเปรียบเทียบ")
+        return
+    limit_mb = min_size() // 1024**2
+    print(f"\nเทียบกับ snapshot: {data['time']}")
+
+    print(f"\n== โฟลเดอร์ที่โตขึ้นมากสุด ==")
+    for row in data["grown"]:
+        print(f"+{gb(row['delta'])}  {row['name']}")
+    print(f"\n== โฟลเดอร์ที่เล็กลงมากสุด ==")
+    for row in data["shrunk"]:
+        print(f"{gb(row['delta'])}  {row['name']}")
+
+    added = data["added"]
+    print(f"\n== ไฟล์ใหญ่ใหม่ (ไม่มีใน snapshot เดิม) {min(15, data['added_total'])} จาก {data['added_total']} ==")
+    for row in added[:15]:
+        print(f"{gb(row['size'])}  {classify(row['path']):10}  {row['path']}")
+    print(f"\nไฟล์ที่หายไป (ใหญ่กว่า {limit_mb} MB): {data['removed']} ไฟล์")
+    print("\nหมายเหตุ: diff ไม่ได้บันทึก snapshot ใหม่ ถ้าต้องการจุดเทียบใหม่ให้รัน report")

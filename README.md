@@ -122,6 +122,26 @@ python3 scan.py duplicates --yes       # ย้ายไฟล์ซ้ำที
 | `NEVER` | เส้นทางที่ติดป้าย "ห้ามลบ" | Docker, iCloud, Photos, Keychains |
 | `CACHE` | เส้นทางที่ติดป้าย "cache" | `/Caches/`, `/.cache/`, `/Logs/` |
 
+## โครงสร้างโค้ด
+
+```
+scan.py              จุดเข้าของ CLI (python3 scan.py <โหมด>)
+gui.py               เซิร์ฟเวอร์และ API ของหน้าเว็บ
+storagecheck/
+  config.py          ค่าตั้งค่า พาธ และค่าคงที่
+  safety.py          ป้ายประเภท รายการห้ามลบ และการย้ายไปถังขยะ (ด่านป้องกัน)
+  walk.py            เดินไฟล์ในโฮม ดัชนีไฟล์ และการสแกนไฟล์ใหญ่
+  hashing.py         hash ของไฟล์ พร้อมแคชและการ hash แบบขนาน
+  duplicates.py      ไฟล์ซ้ำและโฟลเดอร์ซ้ำ
+  history.py         ผลสแกนล่าสุด, snapshot, รายงาน และการเทียบ
+  tools.py           เครื่องมือนักพัฒนา (Docker, Homebrew, conda, pnpm)
+  cleanup.py         เคลียร์ cache และโหมดเลือกเอง
+  cli.py             แยกคำสั่งไปยังโหมดต่าง ๆ
+static/              หน้าเว็บ (HTML, CSS, ES modules)
+```
+
+ถ้าต้องการเพิ่มโหมดใหม่ใน CLI ให้เขียนฟังก์ชันในโมดูลที่เกี่ยวข้อง แล้วเพิ่มการเรียกใน `storagecheck/cli.py`
+
 ## ไฟล์ที่เครื่องมือสร้าง
 
 - `snapshots/` จุดเปรียบเทียบที่ใช้โดย `diff` (สร้างโดย `report`)
