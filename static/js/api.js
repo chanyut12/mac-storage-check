@@ -1,24 +1,26 @@
 /* เรียก API ของ gui.py ทุกอย่างผ่านฟังก์ชันนี้ */
 
 import { alertBox } from "./dialog.js";
-
-const HINT = "ต้องเปิดผ่าน gui.py ที่ http://127.0.0.1:8765 (ไม่ใช่ Live Server หรือไฟล์ที่เปิดตรง ๆ)";
+import { getLang, t } from "./i18n.js";
 
 export async function api(path, body = {}) {
   let r;
   try {
     r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(body) });
+                            body: JSON.stringify({ ...body, lang: getLang() }) });
   } catch (e) {
-    throw new Error("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ " + HINT);
+    throw new Error(`${t("err.connect")} ${t("err.hint")}`);
   }
 
   const text = await r.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = null; }
 
-  if (data === null) throw new Error(`ได้รับคำตอบที่ไม่ใช่ JSON (สถานะ ${r.status}) ${HINT}`);
-  if (!r.ok) throw new Error(data.error || "เกิดข้อผิดพลาด");
+  if (data === null) throw new Error(`${t("err.not_json", { status: r.status })} ${t("err.hint")}`);
+  if (!r.ok) {
+    if (data.detail) console.error(data.detail);      // รายละเอียดของข้อผิดพลาดที่ไม่คาดคิด ไว้ให้ผู้พัฒนา
+    throw new Error(data.error || t("err.generic"));
+  }
   return data;
 }
 
@@ -26,8 +28,8 @@ export async function api(path, body = {}) {
 export async function revealInFinder(path) {
   try {
     const r = await api("/api/reveal", { path });
-    if (!r.ok) await alertBox(r.output, { title: "เปิด Finder ไม่ได้", tone: "warn" });
+    if (!r.ok) await alertBox(r.output, { title: t("reveal.error.title"), tone: "warn" });
   } catch (e) {
-    await alertBox("เปิด Finder ไม่สำเร็จ: " + e.message, { title: "เปิด Finder ไม่ได้", tone: "error" });
+    await alertBox(t("reveal.error.failed", { message: e.message }), { title: t("reveal.error.title"), tone: "error" });
   }
 }

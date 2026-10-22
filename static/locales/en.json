@@ -1,4 +1,26 @@
 {
   "lang.switch": "Change language",
-  "hero.title": "Your Mac's storage"
+  "hero.title": "Your Mac's storage",
+
+  "safety.refused": "Refused: {path} (outside your home folder, does not exist, or on the never-delete list)",
+  "trash.failed": "Could not move to Trash: {error}",
+
+  "error.internal": "Internal server error",
+
+  "api.settings.range": "{field} must be between {lo} and {hi}",
+  "api.exclude.only_subfolders": "Only subfolders inside your home folder can be excluded",
+  "api.snapshot.not_found": "Snapshot not found",
+  "api.snapshot.none": "There is no snapshot yet. Save a report first",
+  "api.weekly.none": "There is no snapshot older than 7 days yet. Save a report now and check the summary again after 7 days",
+  "api.browse.not_allowed": "Cannot open: outside your home folder or not a folder",
+  "api.reveal.not_allowed": "Cannot open: outside your home folder or does not exist",
+  "api.trash.none_selected": "No items selected",
+  "api.trash.done": "Moved to Trash",
+
+  "settings.field.min_mb": "Large file size",
+  "settings.field.dup_min_mb": "Duplicate file size",
+  "settings.field.old_months": "Months unused",
+
+  "reveal.error.title": "Cannot open Finder",
+  "reveal.error.failed": "Could not open Finder: {message}"
 }

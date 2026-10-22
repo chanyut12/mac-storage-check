@@ -1,4 +1,26 @@
 {
   "lang.switch": "เปลี่ยนภาษา",
-  "hero.title": "พื้นที่เครื่องคุณ"
+  "hero.title": "พื้นที่เครื่องคุณ",
+
+  "safety.refused": "ปฏิเสธ: {path} (อยู่นอก home, ไม่มีอยู่จริง หรืออยู่ในรายการห้ามลบ)",
+  "trash.failed": "ย้ายไปถังขยะไม่สำเร็จ: {error}",
+
+  "error.internal": "เกิดข้อผิดพลาดภายในเซิร์ฟเวอร์",
+
+  "api.settings.range": "{field} ต้องอยู่ระหว่าง {lo} ถึง {hi}",
+  "api.exclude.only_subfolders": "ยกเว้นได้เฉพาะโฟลเดอร์ย่อยใน home",
+  "api.snapshot.not_found": "ไม่พบ snapshot นี้",
+  "api.snapshot.none": "ยังไม่มี snapshot ให้กดบันทึกรายงานก่อน",
+  "api.weekly.none": "ยังไม่มี snapshot ที่เก่ากว่า 7 วัน กดบันทึกรายงานไว้ตอนนี้ แล้วกลับมาดูสรุปหลังผ่านไป 7 วัน",
+  "api.browse.not_allowed": "เปิดดูไม่ได้: ไม่อยู่ใน home หรือไม่ใช่โฟลเดอร์",
+  "api.reveal.not_allowed": "เปิดไม่ได้: ไม่อยู่ใน home หรือไม่มีอยู่จริง",
+  "api.trash.none_selected": "ไม่ได้เลือกรายการ",
+  "api.trash.done": "ย้ายไปถังขยะแล้ว",
+
+  "settings.field.min_mb": "ขนาดไฟล์ใหญ่",
+  "settings.field.dup_min_mb": "ขนาดไฟล์ซ้ำ",
+  "settings.field.old_months": "จำนวนเดือนที่ไม่ได้เปิด",
+
+  "reveal.error.title": "เปิด Finder ไม่ได้",
+  "reveal.error.failed": "เปิด Finder ไม่สำเร็จ: {message}"
 }

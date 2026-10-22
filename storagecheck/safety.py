@@ -3,6 +3,7 @@
 import os
 
 from .config import HOME
+from .i18n import tr
 from .platforms import CACHE, NEVER, trash
 
 
@@ -33,6 +34,6 @@ def move_to_trash(paths):
         return True
     for p in paths:
         if not p.startswith(str(HOME) + os.sep) or is_never(p) or not os.path.exists(p):
-            print(f"ปฏิเสธ: {p} (อยู่นอก home, ไม่มีอยู่จริง หรืออยู่ในรายการห้ามลบ)")
+            print(tr("safety.refused", path=p))
             return False
     return trash(paths)
