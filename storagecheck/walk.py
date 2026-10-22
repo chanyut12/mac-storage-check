@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .config import BASE, HOME, SKIP_DIRS, excluded_dirs, load_settings, min_size
+from .platforms import disk_bytes, is_link
 
 
 def dir_size(path):
@@ -16,7 +17,7 @@ def dir_size(path):
             if os.path.islink(p):
                 continue
             try:
-                total += os.lstat(p).st_blocks * 512
+                total += disk_bytes(os.lstat(p))
             except OSError:
                 pass
     return total
@@ -36,13 +37,13 @@ def scanned_dir_size(path):
             continue
         for e in entries:
             try:
-                if e.is_symlink():
+                if is_link(e):
                     continue
                 if e.is_dir(follow_symlinks=False):
                     if e.name not in SKIP_DIRS and e.path not in excluded:
                         stack.append(e.path)
                 else:
-                    total += e.stat(follow_symlinks=False).st_blocks * 512
+                    total += disk_bytes(e.stat(follow_symlinks=False))
             except OSError:
                 continue
     return total
@@ -64,7 +65,7 @@ def iter_files():
             continue
         for e in entries:
             try:
-                if e.is_symlink():
+                if is_link(e):
                     continue
                 if e.is_dir(follow_symlinks=False):
                     if e.name not in SKIP_DIRS and e.path not in excluded:
@@ -80,7 +81,7 @@ def file_rows():
     (path, ขนาดจริง, ขนาดที่ใช้บนดิสก์, atime, mtime, dev, inode)
     atime ต้องเก็บตอนนี้ ก่อนการ hash จะอ่านไฟล์และเปลี่ยนค่า
     """
-    return [(p, st.st_size, st.st_blocks * 512, st.st_atime, st.st_mtime, st.st_dev, st.st_ino)
+    return [(p, st.st_size, disk_bytes(st), st.st_atime, st.st_mtime, st.st_dev, st.st_ino)
             for p, st in iter_files()]
 
 

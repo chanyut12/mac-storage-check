@@ -10,7 +10,6 @@ import io
 import json
 import os
 import shutil
-import subprocess
 import threading
 import webbrowser
 from datetime import datetime
@@ -18,6 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import scan
+from storagecheck.platforms import disk_bytes, is_link_path, reveal
 
 PORT = int(os.environ.get("STORAGECHECK_PORT", "8765"))
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -177,7 +177,7 @@ def api_children(body):
     rows = []
     for name in os.listdir(path):
         p = os.path.join(path, name)
-        if os.path.islink(p):
+        if is_link_path(p):
             continue
         try:
             st = os.lstat(p)
@@ -185,7 +185,7 @@ def api_children(body):
             continue
         is_dir = os.path.isdir(p)
         if not is_dir:
-            size = st.st_blocks * 512
+            size = disk_bytes(st)
         elif sizes is not None:
             size = sizes.get(p, 0)      # โฟลเดอร์ที่ถูกข้ามตาม SKIP_DIRS หรือยกเว้นจะไม่อยู่ในดัชนี
         else:
@@ -199,9 +199,9 @@ def api_children(body):
 def api_reveal(body):
     """เปิด Finder ไปที่ไฟล์หรือโฟลเดอร์นั้น (เฉพาะใน home และมีอยู่จริง)"""
     path = body.get("path", "")
-    if not path.startswith(str(scan.HOME) + "/") or not os.path.exists(path):
+    if not path.startswith(str(scan.HOME) + os.sep) or not os.path.exists(path):
         return {"ok": False, "output": "เปิดไม่ได้: ไม่อยู่ใน home หรือไม่มีอยู่จริง"}
-    subprocess.run(["open", "-R", path], check=False)
+    reveal(path)
     return {"ok": True, "output": ""}
 
 

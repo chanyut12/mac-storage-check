@@ -1,6 +1,7 @@
 """เคลียร์ cache ใน ~/Library/Caches และ ~/.cache และโหมดเลือกไฟล์ทีละรายการ"""
 
 from .config import HOME, TOP_N, min_size
+from .platforms import is_link_path
 from .safety import classify, is_never, move_to_trash
 from .util import gb
 from .walk import dir_size, scan
@@ -15,7 +16,7 @@ def cache_candidates():
         if not root.exists():
             continue
         for child in root.iterdir():
-            if child.is_dir() and not child.is_symlink() and not is_never(str(child)):
+            if child.is_dir() and not is_link_path(str(child)) and not is_never(str(child)):
                 size = dir_size(child)
                 if size >= limit:
                     items.append((size, child))

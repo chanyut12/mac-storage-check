@@ -1,6 +1,7 @@
 """ค่าตั้งค่า พาธ และค่าคงที่ของเครื่องมือ"""
 
 import json
+import os
 
 from pathlib import Path
 
@@ -47,14 +48,6 @@ TOP_N = 30
 SKIP_DIRS = {".git", "node_modules", ".venv", "venv"}
 
 
-# ข้อมูลที่ห้ามลบ (ตรวจทุกโหมด)
-NEVER = ("/Containers/com.docker", "/Mobile Documents/", "Photos Library", "/Keychains/")
-
-
-# โฟลเดอร์ cache ที่สร้างใหม่ได้
-CACHE = ("/Caches/", "/.cache/", "/Logs/")
-
-
 def load_settings():
     """ค่าตั้งค่าจาก settings.json รวมกับค่าเริ่มต้น (ไฟล์เสียหายจะใช้ค่าเริ่มต้น)"""
     s = dict(DEFAULT_SETTINGS)
@@ -80,4 +73,4 @@ def dup_min_size():
 
 def excluded_dirs():
     """โฟลเดอร์ที่ผู้ใช้ยกเว้นจากการสแกน เก็บเป็น ~/... ในไฟล์ตั้งค่า (~ คือ HOME)"""
-    return {str(HOME) + x[1:] for x in load_settings()["exclude"] if x.startswith("~")}
+    return {os.path.normpath(str(HOME) + x[1:]) for x in load_settings()["exclude"] if x.startswith("~")}
