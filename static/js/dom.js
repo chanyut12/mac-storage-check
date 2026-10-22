@@ -1,6 +1,7 @@
 /* ตัวช่วยเกี่ยวกับ DOM และการจัดรูปแบบข้อความ */
 
 import { alertBox } from "./dialog.js";
+import { t } from "./i18n.js";
 
 export const $ = (id) => document.getElementById(id);
 
@@ -30,6 +31,6 @@ export function setBusy(on, text) {
 export async function job(text, fn) {
   setBusy(true, text);
   try { return await fn(); }
-  catch (e) { await alertBox("เกิดข้อผิดพลาด: " + e.message, { tone: "error", title: "ทำรายการไม่สำเร็จ" }); }
+  catch (e) { await alertBox(t("error.with_message", { message: e.message }), { tone: "error", title: t("dialog.job_failed") }); }
   finally { setBusy(false); }
 }

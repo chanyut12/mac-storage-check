@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from .config import BASE, HOME, SKIP_DIRS, excluded_dirs, load_settings, min_size
+from .i18n import tr
 from .platforms import disk_bytes, is_link
 
 
@@ -136,7 +137,7 @@ def scan(atimes=None, rows=None):
     ถ้าส่ง atimes (dict) จะเก็บ atime ของไฟล์ใหญ่ไว้ตอนสแกน ก่อนที่การ hash จะเปลี่ยนค่า
     ถ้าส่ง rows (จาก file_rows/cached_rows) จะไม่เดินโฟลเดอร์ซ้ำอีก
     """
-    print("กำลังสแกน... (อาจใช้เวลาหลายนาที)", file=sys.stderr)
+    print(tr("cli.scanning"), file=sys.stderr)
     limit = min_size()
     rows = file_rows() if rows is None else rows
     files, buckets = [], {}

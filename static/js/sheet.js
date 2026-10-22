@@ -5,22 +5,31 @@ import { revealInFinder } from "./api.js";
 import { state } from "./state.js";
 import { exportCsv } from "./export.js";
 import { kindLabel } from "./labels.js";
+import { t, onLangChange } from "./i18n.js";
 
 const selected = new Set();                // การเลือกคงอยู่แม้เปลี่ยนตัวกรอง
 let filter = { kind: null, old: false };   // ตัวกรองที่ใช้อยู่ตอนนี้
+
+/* title, sub และ action ของหน้าต่างเป็นสตริงหรือฟังก์ชัน (ฟังก์ชันถูกเรียกใหม่เมื่อเปลี่ยนภาษา) */
+const text = (v) => (typeof v === "function" ? v() : v);
+
+function renderSheetHeader() {
+  const cfg = state.sheet;
+  $("sheet-title").textContent = text(cfg.title);
+  $("sheet-sub").textContent = text(cfg.sub) || "";
+  $("sheet-action").textContent = text(cfg.action) || "";
+}
 
 export function openSheet(cfg) {
   state.sheet = cfg;
   selected.clear();
   filter = { kind: null, old: false };
-  $("sheet-title").textContent = cfg.title;
-  $("sheet-sub").textContent = cfg.sub || "";
+  renderSheetHeader();
   $("sheet-text").hidden = cfg.mode !== "text";
   $("sheet-list").hidden = cfg.mode !== "list";
   $("sheet-toolbar").hidden = cfg.mode !== "list";
   $("sheet-chips").hidden = cfg.mode !== "list";
   $("sheet-action").hidden = !cfg.action;
-  $("sheet-action").textContent = cfg.action || "";
   $("sheet-action").disabled = false;      // โหมดรายการจะปิดเองใน updateSheetSum จนกว่าจะเลือกรายการ
   $("sheet-search").value = "";
   $("overlay").hidden = false;
@@ -55,13 +64,13 @@ function visibleItems() {
 function renderChips() {
   const items = state.sheet.items();
   const kinds = [...new Set(items.map(x => x.kind))].sort((a, b) => kindLabel(a) < kindLabel(b) ? -1 : 1);
-  const chips = [`<button class="chip${filter.kind ? "" : " on"}" data-kind="">ทั้งหมด ${items.length}</button>`];
+  const chips = [`<button class="chip${filter.kind ? "" : " on"}" data-kind="">${esc(t("chips.all", { n: items.length }))}</button>`];
   for (const k of kinds) {
     const n = items.filter(x => x.kind === k).length;
     chips.push(`<button class="chip${filter.kind === k ? " on" : ""}" data-kind="${esc(k)}">${esc(kindLabel(k))} ${n}</button>`);
   }
   if (items.some(x => x.last_access != null)) {
-    chips.push(`<button class="chip${filter.old ? " on" : ""}" data-old="1">ไม่ได้เปิดมาเกิน ${state.settings.old_months} เดือน</button>`);
+    chips.push(`<button class="chip${filter.old ? " on" : ""}" data-old="1">${esc(t("chips.old", { n: state.settings.old_months }))}</button>`);
   }
   $("sheet-chips").innerHTML = chips.join("");
 }
@@ -73,10 +82,10 @@ export function renderList() {
       <label class="pick">
         <input type="checkbox" data-path="${esc(x.path)}" ${x.keep ? "disabled" : ""} ${selected.has(x.path) ? "checked" : ""}>
         <span class="sz">${fmt(x.size)}</span>
-        <span class="name">${esc(shortPath(x.path).split("/").pop())}${x.keep ? ' <span class="badge">เก็บไว้</span>' : ""}<small>${esc(shortPath(x.path))}</small></span>
+        <span class="name">${esc(shortPath(x.path).split("/").pop())}${x.keep ? ` <span class="badge">${esc(t("sheet.keep"))}</span>` : ""}<small>${esc(shortPath(x.path))}</small></span>
       </label>
-      <button class="btn quiet reveal" data-path="${esc(x.path)}" title="เปิดตำแหน่งนี้ใน Finder">เปิดใน Finder</button>
-    </div>`).join("") : `<div class="empty">ไม่มีรายการ</div>`;
+      <button class="btn quiet reveal" data-path="${esc(x.path)}" title="${esc(t("sheet.reveal_title"))}">${esc(t("common.finder_open"))}</button>
+    </div>`).join("") : `<div class="empty">${esc(t("sheet.empty"))}</div>`;
   renderChips();
   updateSheetSum();
 }
@@ -85,8 +94,8 @@ export function updateSheetSum() {
   const picked = selectedPaths();
   const size = state.sheet.items().filter(x => picked.includes(x.path)).reduce((a, x) => a + x.size, 0);
   $("sheet-sum").textContent = picked.length
-    ? `เลือก ${picked.length} รายการ · ${fmt(size)}`
-    : `${state.sheet.items().length} รายการ`;
+    ? t("sheet.selected", { n: picked.length, size: fmt(size) })
+    : t("sheet.count", { n: state.sheet.items().length });
   $("sheet-action").disabled = picked.length === 0;
 }
 
@@ -133,4 +142,9 @@ export function initSheet() {
     if (!state.sheet || !state.sheet.onAction) return;
     await state.sheet.onAction();
   };
+  onLangChange(() => {
+    if (!state.sheet) return;
+    renderSheetHeader();
+    if (state.sheet.mode === "list") renderList();
+  });
 }

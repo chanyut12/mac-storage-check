@@ -7,9 +7,6 @@ from .i18n import tr
 from .platforms import CACHE, NEVER, trash
 
 
-CATEGORY_LABELS = {"never": "⛔ ห้ามลบ", "cache": "🟢 cache", "review": "🟡 ตรวจก่อน"}
-
-
 def classify(path):
     """คืนรหัสประเภท: never (ห้ามลบ), cache (สร้างใหม่ได้), review (ตรวจก่อน)"""
     if any(k in path for k in NEVER):
@@ -20,8 +17,8 @@ def classify(path):
 
 
 def category_label(code):
-    """ป้ายที่แสดงให้ผู้ใช้ของรหัสประเภท"""
-    return CATEGORY_LABELS[code]
+    """ป้ายที่แสดงให้ผู้ใช้ของรหัสประเภท ตามภาษาปัจจุบัน"""
+    return tr(f"category.{code}")
 
 
 def is_never(path):

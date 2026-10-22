@@ -1,5 +1,7 @@
 /* กล่องข้อความแทน alert() กับ confirm() ของเบราว์เซอร์ ออกแบบให้เข้ากับหน้าเว็บ */
 
+import { t } from "./i18n.js";
+
 const ICONS = { info: "ℹ️", ok: "✅", warn: "⚠️", error: "⛔" };
 
 function escapeHtml(s) {
@@ -60,7 +62,7 @@ export function pickDialog({ title, items, selected = null }) {
             <span>${escapeHtml(it.label)}</span><small>${escapeHtml(it.sub || "")}</small>
           </button>`).join("")}
         </div>
-        <div class="dlg-actions"><button class="btn quiet" data-close>ปิด</button></div>
+        <div class="dlg-actions"><button class="btn quiet" data-close>${escapeHtml(t("common.close"))}</button></div>
       </div>`;
     const close = (value) => {
       document.removeEventListener("keydown", onKey);
@@ -80,18 +82,18 @@ export function pickDialog({ title, items, selected = null }) {
   });
 }
 
-export function alertBox(message, { title = "แจ้งให้ทราบ", tone = "info" } = {}) {
+export function alertBox(message, { title = t("dialog.notice"), tone = "info" } = {}) {
   return openDialog({
     title, message, tone, cancelValue: true,
-    buttons: [{ label: "ตกลง", value: true, kind: "primary" }],
+    buttons: [{ label: t("dialog.ok"), value: true, kind: "primary" }],
   });
 }
 
-export function confirmBox(message, { title = "ยืนยันการทำรายการ", confirmLabel = "ยืนยัน", danger = false } = {}) {
+export function confirmBox(message, { title = t("dialog.confirm_title"), confirmLabel = t("dialog.confirm"), danger = false } = {}) {
   return openDialog({
     title, message, tone: danger ? "warn" : "info", cancelValue: false,
     buttons: [
-      { label: "ยกเลิก", value: false, kind: "quiet" },
+      { label: t("dialog.cancel"), value: false, kind: "quiet" },
       { label: confirmLabel, value: true, kind: danger ? "danger" : "primary" },
     ],
   });

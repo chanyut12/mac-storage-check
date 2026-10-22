@@ -3,32 +3,31 @@
 import { job } from "./dom.js";
 import { api } from "./api.js";
 import { state } from "./state.js";
+import { t } from "./i18n.js";
 import { openSheet } from "./sheet.js";
 import { trashSelected } from "./trash.js";
 import { renderCards } from "./cards.js";
 
 /* หน้าต่างรายการของกลุ่มซ้ำ ใช้ได้ทั้งไฟล์และโฟลเดอร์ โดยแยกผลด้วย key ใน state */
-function groupSheet(key, title, sub) {
+function groupSheet(key, titleKey, subKey) {
   return {
-    title,
-    sub,
+    title: () => t(titleKey),
+    sub: () => t(subKey),
     mode: "list",
     items: () => state[key],
-    action: "ย้ายไปถังขยะ",
+    action: () => t("common.move_to_trash"),
     onAction: () => trashSelected((paths) => {
       state[key] = state[key].filter(x => !paths.includes(x.path));
     }),
   };
 }
 
-const dupsSheet = groupSheet("dups", "ไฟล์ซ้ำ",
-  "ฉบับที่ติดป้าย 'เก็บไว้' คือฉบับที่แก้ไขล่าสุดของแต่ละกลุ่ม เลือกไม่ได้ ติ๊กเฉพาะฉบับอื่นที่ต้องการย้ายออก");
-const folderDupsSheet = groupSheet("folderDups", "โฟลเดอร์ซ้ำ",
-  "โฟลเดอร์ที่เนื้อหาทั้งหมดเหมือนกัน ติ๊กได้เฉพาะโฟลเดอร์ที่ไม่ได้ติดป้าย 'เก็บไว้'");
+const dupsSheet = groupSheet("dups", "card.dups.title", "dups.sub");
+const folderDupsSheet = groupSheet("folderDups", "card.fdups.title", "fdups.sub");
 
 async function openFound(key, path, sheet) {
   if (!state[key]) {
-    const d = await job("กำลังค้นหา... อาจใช้เวลานานหลายนาที กรุณารอสักครู่", () => api(path));
+    const d = await job(t("dups.busy"), () => api(path));
     if (!d) return;
     state[key] = d.items;
     renderCards();

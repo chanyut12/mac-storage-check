@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from .config import CACHE_DIR, HOME, LAST_SCAN, REPORT_DIR, SNAP_DIR, TOP_N, min_size
+from .i18n import tr
 from .safety import category_label, classify
 from .util import gb
 from .walk import scan
@@ -78,17 +79,17 @@ def mode_report():
     lines = [
         f"# Storage report {datetime.now():%Y-%m-%d %H:%M}",
         "",
-        f"- ใช้ไป: {gb(used).strip()} / ทั้งหมด {gb(total).strip()} (ว่าง {gb(free).strip()})",
-        f"- ไฟล์ตั้งแต่ {min_size() // 1024**2} MB: {len(files)} ไฟล์",
+        tr("report.used", used=gb(used).strip(), total=gb(total).strip(), free=gb(free).strip()),
+        tr("report.files_over", min=min_size() // 1024**2, n=len(files)),
         "",
-        f"## ไฟล์ใหญ่สุด {TOP_N} อันดับ",
+        tr("report.top_files", n=TOP_N),
         "",
-        "| ขนาด | ประเภท | ไฟล์ |",
+        tr("report.table_files"),
         "|---:|---|---|",
     ]
     for size, p in sorted_files[:TOP_N]:
         lines.append(f"| {gb(size).strip()} | {category_label(classify(p))} | `{p.replace('|', chr(92) + '|')}` |")
-    lines += ["", f"## โฟลเดอร์ใหญ่สุด {TOP_N} อันดับ", "", "| ขนาด | โฟลเดอร์ |", "|---:|---|"]
+    lines += ["", tr("report.top_folders", n=TOP_N), "", tr("report.table_folders"), "|---:|---|"]
     for key, size in sorted_buckets[:TOP_N]:
         lines.append(f"| {gb(size).strip()} | `{key}` |")
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -99,7 +100,7 @@ def mode_report():
         for size, p in sorted_files:
             w.writerow([size, category_label(classify(p)), p])
 
-    print(f"บันทึกรายงานแล้ว:\n  {md_path}\n  {csv_path}\n  snapshot: {snap}")
+    print(tr("report.saved", md=md_path, csv=csv_path, snap=snap))
 
 
 def list_snapshots():
@@ -156,21 +157,21 @@ def diff_data(snap_path=None):
 def mode_diff():
     data = diff_data()
     if data is None:
-        print("ยังไม่มี snapshot ให้รัน `python3 scan.py report` ก่อนเพื่อสร้างจุดเปรียบเทียบ")
+        print(tr("cli.diff_no_snapshot"))
         return
     limit_mb = min_size() // 1024**2
-    print(f"\nเทียบกับ snapshot: {data['time']}")
+    print("\n" + tr("cli.diff_compared", time=data["time"]))
 
-    print(f"\n== โฟลเดอร์ที่โตขึ้นมากสุด ==")
+    print("\n" + tr("cli.diff_grown"))
     for row in data["grown"]:
         print(f"+{gb(row['delta'])}  {row['name']}")
-    print(f"\n== โฟลเดอร์ที่เล็กลงมากสุด ==")
+    print("\n" + tr("cli.diff_shrunk"))
     for row in data["shrunk"]:
         print(f"{gb(row['delta'])}  {row['name']}")
 
     added = data["added"]
-    print(f"\n== ไฟล์ใหญ่ใหม่ (ไม่มีใน snapshot เดิม) {min(15, data['added_total'])} จาก {data['added_total']} ==")
+    print("\n" + tr("cli.diff_added", shown=min(15, data["added_total"]), total=data["added_total"]))
     for row in added[:15]:
         print(f"{gb(row['size'])}  {category_label(classify(row['path'])):10}  {row['path']}")
-    print(f"\nไฟล์ที่หายไป (ใหญ่กว่า {limit_mb} MB): {data['removed']} ไฟล์")
-    print("\nหมายเหตุ: diff ไม่ได้บันทึก snapshot ใหม่ ถ้าต้องการจุดเทียบใหม่ให้รัน report")
+    print("\n" + tr("cli.diff_removed", min=limit_mb, n=data["removed"]))
+    print("\n" + tr("cli.diff_note"))

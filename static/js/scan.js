@@ -1,8 +1,9 @@
 /* ปุ่มตรวจพื้นที่ และการโหลดผลสแกนล่าสุดที่บันทึกไว้ */
 
-import { $, fmt, job } from "./dom.js";
+import { $, job } from "./dom.js";
 import { api } from "./api.js";
 import { state } from "./state.js";
+import { t } from "./i18n.js";
 import { renderCards, renderFolders } from "./cards.js";
 
 /* แสดงผลสแกน ใช้ทั้งตอนสแกนใหม่และตอนโหลดผลเดิมตอนเปิดหน้า */
@@ -12,21 +13,18 @@ export function applyScan(d) {
   state.folders = d.folders;
   state.scanned = true;
   state.scannedAt = d.time;
+  state.disk = d.disk;
 
-  const { used, total, free } = d.disk;
   $("disk").hidden = false;
-  $("meter").style.width = (used / total * 100).toFixed(1) + "%";
-  $("used-label").textContent = `ใช้ไป ${fmt(used)}`;
-  $("free-label").textContent = `ว่าง ${fmt(free)}`;
+  $("meter").style.width = (d.disk.used / d.disk.total * 100).toFixed(1) + "%";
 
   renderFolders(d.folders);
   $("cards").hidden = false;
   renderCards();
-  $("scan-btn").textContent = "ตรวจอีกครั้ง";
 }
 
 export function runScan() {
-  return job("กำลังตรวจ... อาจใช้เวลาหลายนาที กรุณารอสักครู่", async () => {
+  return job(t("scan.busy"), async () => {
     applyScan(await api("/api/scan"));
   });
 }

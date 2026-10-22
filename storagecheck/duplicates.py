@@ -5,6 +5,7 @@ import sys
 
 from .config import HOME, SKIP_DIRS, TOP_N, dup_min_size, excluded_dirs
 from .hashing import HashCache, _group_by_hash, hash_paths
+from .i18n import tr
 from .safety import is_never, move_to_trash
 from .util import gb
 from .walk import file_rows
@@ -16,7 +17,7 @@ def find_duplicates(atimes=None, rows=None):
     ขั้นตอน: จัดกลุ่มตามขนาด -> hash 64 KB แรก -> hash ทั้งไฟล์ เพื่อให้ขั้นที่แพงทำน้อยที่สุด
     ถ้าส่ง atimes (dict) จะเก็บ atime ไว้ก่อนการ hash จะอ่านไฟล์
     """
-    print("กำลังหาไฟล์ซ้ำ... (อาจใช้เวลานาน)", file=sys.stderr)
+    print(tr("cli.dups_finding"), file=sys.stderr)
     limit = dup_min_size()
     rows = file_rows() if rows is None else rows
     by_size, meta, seen_inodes = {}, {}, set()
@@ -80,7 +81,7 @@ def find_folder_duplicates(rows=None):
     - รายงานเฉพาะโฟลเดอร์ระดับบนสุดของกลุ่ม โฟลเดอร์ที่อยู่ในกลุ่มซ้ำอื่นอยู่แล้วจะถูกข้าม
     - รวมค่าจากล่างขึ้นบนในรอบเดียว, คัดด้วยชื่อไฟล์และขนาดก่อน แล้วจึง hash เฉพาะที่เหลือ
     """
-    print("กำลังหาโฟลเดอร์ซ้ำ... (อาจใช้เวลานานมาก)", file=sys.stderr)
+    print(tr("cli.fdups_finding"), file=sys.stderr)
     limit = dup_min_size()
     home = str(HOME)
     rows = file_rows() if rows is None else rows
@@ -176,22 +177,22 @@ def find_folder_duplicates(rows=None):
 def mode_duplicates(apply):
     groups = find_duplicates()
     if not groups:
-        print(f"ไม่พบไฟล์ซ้ำตั้งแต่ {dup_min_size() // 1024**2} MB ขึ้นไป")
+        print(tr("cli.dups_none", min=dup_min_size() // 1024**2))
         return
 
     reclaim = sum(size * (len(paths) - 1) for size, paths in groups)
-    print(f"\n== ไฟล์ซ้ำ {len(groups)} กลุ่ม คืนได้ราว {gb(reclaim).strip()} ==")
+    print("\n" + tr("cli.dups_header", n=len(groups), reclaim=gb(reclaim).strip()))
     for size, paths in groups[:TOP_N]:
-        print(f"\n{gb(size)} x {len(paths)} ชุด (คืนได้ {gb(size * (len(paths) - 1)).strip()})")
+        print("\n" + tr("cli.dups_group", size=gb(size), count=len(paths), reclaim=gb(size * (len(paths) - 1)).strip()))
         for p in paths:
             print(f"  {p}")
     if len(groups) > TOP_N:
-        print(f"\n... และอีก {len(groups) - TOP_N} กลุ่ม")
+        print("\n" + tr("cli.dups_more", n=len(groups) - TOP_N))
 
     to_remove = [p for _, paths in groups for p in removal_plan(paths)]
-    print(f"\nแผนลบ: เก็บฉบับที่แก้ไขล่าสุดในแต่ละกลุ่มไว้ ย้ายไปถังขยะ {len(to_remove)} ไฟล์")
+    print("\n" + tr("cli.dups_plan", n=len(to_remove)))
     if not apply:
-        print("[dry-run] ยังไม่ได้ย้ายอะไร ตรวจรายการด้านบน แล้วใส่ --yes เพื่อย้ายไปถังขยะ")
+        print(tr("cli.dups_dry_run"))
         return
     if move_to_trash(to_remove):
-        print(f"ย้าย {len(to_remove)} ไฟล์ไปถังขยะแล้ว กู้คืนได้จากถังขยะ")
+        print(tr("cli.dups_moved", n=len(to_remove)))

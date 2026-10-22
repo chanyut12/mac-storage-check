@@ -317,14 +317,15 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, target.read_bytes(), ctype)
 
     def do_POST(self):
-        route = ROUTES.get(self.path)
-        if route is None:
-            return self._send(404, b'{"error":"not found"}', "application/json")
         length = int(self.headers.get("Content-Length", 0))
         try:
             body = json.loads(self.rfile.read(length) or b"{}")
             set_lang(body.pop("lang", None))        # ภาษาของคำขอนี้ ไม่ให้ปนเข้าไปในข้อมูลของ route
-            result, code = route(body), 200
+            route = ROUTES.get(self.path)
+            if route is None:
+                result, code = {"error": tr("error.not_found"), "code": "error.not_found", "vars": {}}, 404
+            else:
+                result, code = route(body), 200
         except ApiError as e:
             result, code = {"error": tr(e.code, **e.vars), "code": e.code, "vars": e.vars}, 400
         except Exception as e:  # ข้อผิดพลาดที่ไม่คาดคิด: ส่งข้อความกลาง (แปลแล้ว) ส่วนรายละเอียดอยู่ใน detail
@@ -334,14 +335,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    set_lang(os.environ.get("STORAGECHECK_LANG"))       # ภาษาของข้อความในเทอร์มินัล (หน้าเว็บส่งภาษามากับแต่ละคำขอ)
     server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     url = f"http://127.0.0.1:{PORT}/"
-    print(f"เปิด Storage Check ที่ {url}  (กด Ctrl+C เพื่อปิด)")
+    print(tr("cli.gui_open", url=url))
     threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nปิดแล้ว")
+        print("\n" + tr("cli.gui_closed"))
     finally:
         server.server_close()
 
