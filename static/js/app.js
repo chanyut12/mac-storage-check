@@ -1,5 +1,6 @@
 /* จุดเริ่มต้นของหน้าเว็บ: ผูกปุ่มต่าง ๆ เข้ากับโมดูลที่เกี่ยวข้อง */
 
+import "./i18n.js";
 import { $ } from "./dom.js";
 import { state } from "./state.js";
 import { openSheet, initSheet } from "./sheet.js";

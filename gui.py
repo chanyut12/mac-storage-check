@@ -22,7 +22,7 @@ from storagecheck.platforms import disk_bytes, is_link_path, reveal
 PORT = int(os.environ.get("STORAGECHECK_PORT", "8765"))
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 MIME = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-        ".js": "text/javascript; charset=utf-8"}
+        ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8"}
 LOCK = threading.Lock()          # ทำงานทีละงาน เพราะ scan.py พิมพ์ผลลง stdout
 
 
