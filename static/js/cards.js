@@ -5,7 +5,7 @@ import { state } from "./state.js";
 
 function totals() {
   const cache = state.cache.reduce((a, x) => a + x.size, 0);
-  const big = state.files.filter(x => x.category.includes("ตรวจก่อน")).reduce((a, x) => a + x.size, 0);
+  const big = state.files.filter(x => x.category === "review").reduce((a, x) => a + x.size, 0);
   return { cache, big };
 }
 

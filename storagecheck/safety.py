@@ -6,12 +6,21 @@ from .config import HOME
 from .platforms import CACHE, NEVER, trash
 
 
+CATEGORY_LABELS = {"never": "⛔ ห้ามลบ", "cache": "🟢 cache", "review": "🟡 ตรวจก่อน"}
+
+
 def classify(path):
+    """คืนรหัสประเภท: never (ห้ามลบ), cache (สร้างใหม่ได้), review (ตรวจก่อน)"""
     if any(k in path for k in NEVER):
-        return "⛔ ห้ามลบ"
+        return "never"
     if any(k in path for k in CACHE):
-        return "🟢 cache"
-    return "🟡 ตรวจก่อน"
+        return "cache"
+    return "review"
+
+
+def category_label(code):
+    """ป้ายที่แสดงให้ผู้ใช้ของรหัสประเภท"""
+    return CATEGORY_LABELS[code]
 
 
 def is_never(path):

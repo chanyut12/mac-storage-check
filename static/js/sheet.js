@@ -4,6 +4,7 @@ import { $, esc, fmt, shortPath } from "./dom.js";
 import { revealInFinder } from "./api.js";
 import { state } from "./state.js";
 import { exportCsv } from "./export.js";
+import { kindLabel } from "./labels.js";
 
 const selected = new Set();                // การเลือกคงอยู่แม้เปลี่ยนตัวกรอง
 let filter = { kind: null, old: false };   // ตัวกรองที่ใช้อยู่ตอนนี้
@@ -53,11 +54,11 @@ function visibleItems() {
 
 function renderChips() {
   const items = state.sheet.items();
-  const kinds = [...new Set(items.map(x => x.kind))].sort();
+  const kinds = [...new Set(items.map(x => x.kind))].sort((a, b) => kindLabel(a) < kindLabel(b) ? -1 : 1);
   const chips = [`<button class="chip${filter.kind ? "" : " on"}" data-kind="">ทั้งหมด ${items.length}</button>`];
   for (const k of kinds) {
     const n = items.filter(x => x.kind === k).length;
-    chips.push(`<button class="chip${filter.kind === k ? " on" : ""}" data-kind="${esc(k)}">${esc(k)} ${n}</button>`);
+    chips.push(`<button class="chip${filter.kind === k ? " on" : ""}" data-kind="${esc(k)}">${esc(kindLabel(k))} ${n}</button>`);
   }
   if (items.some(x => x.last_access != null)) {
     chips.push(`<button class="chip${filter.old ? " on" : ""}" data-old="1">ไม่ได้เปิดมาเกิน ${state.settings.old_months} เดือน</button>`);

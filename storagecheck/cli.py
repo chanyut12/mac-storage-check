@@ -6,7 +6,7 @@ from .cleanup import mode_clean_cache, mode_interactive
 from .config import TOP_N
 from .duplicates import mode_duplicates
 from .history import mode_diff, mode_report
-from .safety import classify
+from .safety import category_label, classify
 from .tools import mode_brew_upgrade, mode_tools
 from .util import gb
 from .walk import scan
@@ -16,7 +16,7 @@ def mode_scan():
     files, buckets = scan()
     print(f"\n== ไฟล์ใหญ่สุด {TOP_N} อันดับ ==")
     for size, p in sorted(files, reverse=True)[:TOP_N]:
-        print(f"{gb(size)}  {classify(p):10}  {p}")
+        print(f"{gb(size)}  {category_label(classify(p)):10}  {p}")
     print(f"\n== โฟลเดอร์ใหญ่สุด {TOP_N} อันดับ ==")
     for key, size in sorted(buckets.items(), key=lambda x: -x[1])[:TOP_N]:
         print(f"{gb(size)}  {key}")

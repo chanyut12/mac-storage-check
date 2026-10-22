@@ -2,7 +2,7 @@
 
 from .config import HOME, TOP_N, min_size
 from .platforms import is_link_path
-from .safety import classify, is_never, move_to_trash
+from .safety import category_label, classify, is_never, move_to_trash
 from .util import gb
 from .walk import dir_size, scan
 
@@ -51,7 +51,7 @@ def mode_interactive():
 
     print(f"\n== ไฟล์ที่เลือกได้ (ไม่รวมป้าย ⛔) ==")
     for i, (size, p) in enumerate(candidates, 1):
-        print(f"{i:3}. {gb(size)}  {classify(p):10}  {p}")
+        print(f"{i:3}. {gb(size)}  {category_label(classify(p)):10}  {p}")
 
     raw = input("\nเลือกหมายเลข (คั่นด้วย , เช่น 1,3,5) หรือ Enter เพื่อยกเลิก: ").strip()
     if not raw:

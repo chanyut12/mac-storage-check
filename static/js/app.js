@@ -38,7 +38,7 @@ $("big-btn").onclick = () => {
     title: "ไฟล์ขนาดใหญ่",
     sub: "ตรวจให้แน่ใจก่อนลบ ไฟล์เหล่านี้อาจเป็นงานหรือข้อมูลที่ยังต้องใช้",
     mode: "list",
-    items: () => state.files.filter(x => x.category.includes("ตรวจก่อน")),
+    items: () => state.files.filter(x => x.category === "review"),
     action: "ย้ายไปถังขยะ",
     onAction: () => trashSelected((paths) => {
       state.files = state.files.filter(x => !paths.includes(x.path));

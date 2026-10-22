@@ -34,14 +34,23 @@ def capture(fn, *args):
     return buf.getvalue()
 
 
+def capture_result(fn, *args):
+    """เหมือน capture แต่คืน (ค่าที่ฟังก์ชันคืนมา, ข้อความที่พิมพ์)"""
+    buf = io.StringIO()
+    with LOCK, contextlib.redirect_stdout(buf):
+        result = fn(*args)
+    return result, buf.getvalue()
+
+
+# รหัสประเภทไฟล์ ป้ายที่แสดงอยู่ฝั่งหน้าเว็บ (static/js/labels.js)
 KIND_BY_EXT = {
-    "วิดีโอ": {"mov", "mp4", "mkv", "avi", "m4v", "webm"},
-    "ไฟล์บีบอัด": {"zip", "rar", "7z", "tar", "gz", "tgz", "xz", "bz2"},
-    "disk image": {"dmg", "iso", "img", "pkg"},
-    "ข้อมูล": {"csv", "db", "sqlite", "xlsx", "xls", "json", "parquet", "pkl", "npy", "h5", "sav", "dta"},
-    "โมเดล AI": {"pt", "pth", "safetensors", "gguf", "onnx", "ckpt"},
-    "เอกสาร": {"pdf", "doc", "docx", "ppt", "pptx", "txt", "md", "pages", "key", "numbers"},
-    "รูปภาพ": {"png", "jpg", "jpeg", "heic", "gif", "webp", "tiff", "raw"},
+    "video": {"mov", "mp4", "mkv", "avi", "m4v", "webm"},
+    "archive": {"zip", "rar", "7z", "tar", "gz", "tgz", "xz", "bz2"},
+    "disk_image": {"dmg", "iso", "img", "pkg"},
+    "data": {"csv", "db", "sqlite", "xlsx", "xls", "json", "parquet", "pkl", "npy", "h5", "sav", "dta"},
+    "ai_model": {"pt", "pth", "safetensors", "gguf", "onnx", "ckpt"},
+    "document": {"pdf", "doc", "docx", "ppt", "pptx", "txt", "md", "pages", "key", "numbers"},
+    "image": {"png", "jpg", "jpeg", "heic", "gif", "webp", "tiff", "raw"},
 }
 
 
@@ -50,7 +59,7 @@ def kind_of(path):
     for name, exts in KIND_BY_EXT.items():
         if ext in exts:
             return name
-    return "อื่น ๆ"
+    return "other"
 
 
 def item(size, path, atime=None):
@@ -223,7 +232,7 @@ def api_folder_duplicates(_body):
         groups = scan.find_folder_duplicates(scan.cached_rows())
     items = []
     for gi, (size, paths, keep) in enumerate(groups):
-        items += [{**item(size, p), "kind": "โฟลเดอร์", "keep": p == keep, "group": gi} for p in paths]
+        items += [{**item(size, p), "kind": "folder", "keep": p == keep, "group": gi} for p in paths]
     return {"items": items}
 
 
@@ -232,17 +241,17 @@ def api_snapshot_delete(body):
     name = body.get("snapshot")
     if name not in {s["name"] for s in scan.list_snapshots()}:
         raise ValueError("ไม่พบ snapshot นี้")
-    output = capture(scan.move_to_trash, [str(scan.SNAP_DIR / name)])
-    return {"ok": "ปฏิเสธ" not in output, "output": output}
+    ok, output = capture_result(scan.move_to_trash, [str(scan.SNAP_DIR / name)])
+    return {"ok": bool(ok), "output": output}
 
 
 def api_trash(body):
     paths = body.get("paths") or []
     if not paths:
         return {"ok": False, "output": "ไม่ได้เลือกรายการ"}
-    output = capture(scan.move_to_trash, paths)
+    ok, output = capture_result(scan.move_to_trash, paths)
     scan.clear_index()      # ไฟล์ที่ย้ายไปแล้วต้องไม่ค้างในดัชนี
-    return {"ok": "ปฏิเสธ" not in output, "output": output or "ย้ายไปถังขยะแล้ว"}
+    return {"ok": bool(ok), "output": output or "ย้ายไปถังขยะแล้ว"}
 
 
 ROUTES = {

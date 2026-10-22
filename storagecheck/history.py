@@ -8,9 +8,16 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from .config import CACHE_DIR, HOME, LAST_SCAN, REPORT_DIR, SNAP_DIR, TOP_N, min_size
-from .safety import classify
+from .safety import category_label, classify
 from .util import gb
 from .walk import scan
+
+
+# ผลสแกนที่บันทึกก่อนใช้รหัสเก็บป้ายเป็นข้อความไทย แปลงเป็นรหัสตอนโหลด
+OLD_CATEGORY = {"⛔ ห้ามลบ": "never", "🟢 cache": "cache", "🟡 ตรวจก่อน": "review"}
+OLD_KIND = {"วิดีโอ": "video", "ไฟล์บีบอัด": "archive", "disk image": "disk_image", "ข้อมูล": "data",
+            "โมเดล AI": "ai_model", "เอกสาร": "document", "รูปภาพ": "image", "โฟลเดอร์": "folder",
+            "อื่น ๆ": "other"}
 
 
 def save_last_scan(data):
@@ -22,9 +29,14 @@ def load_last_scan():
     if not LAST_SCAN.exists():
         return None
     try:
-        return json.loads(LAST_SCAN.read_text(encoding="utf-8"))
+        data = json.loads(LAST_SCAN.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+    for key in ("files", "cache"):
+        for x in data.get(key, []):
+            x["category"] = OLD_CATEGORY.get(x.get("category"), x.get("category"))
+            x["kind"] = OLD_KIND.get(x.get("kind"), x.get("kind"))
+    return data
 
 
 def clear_last_scan():
@@ -75,7 +87,7 @@ def mode_report():
         "|---:|---|---|",
     ]
     for size, p in sorted_files[:TOP_N]:
-        lines.append(f"| {gb(size).strip()} | {classify(p)} | `{p.replace('|', chr(92) + '|')}` |")
+        lines.append(f"| {gb(size).strip()} | {category_label(classify(p))} | `{p.replace('|', chr(92) + '|')}` |")
     lines += ["", f"## โฟลเดอร์ใหญ่สุด {TOP_N} อันดับ", "", "| ขนาด | โฟลเดอร์ |", "|---:|---|"]
     for key, size in sorted_buckets[:TOP_N]:
         lines.append(f"| {gb(size).strip()} | `{key}` |")
@@ -85,7 +97,7 @@ def mode_report():
         w = csv.writer(f)
         w.writerow(["size_bytes", "category", "path"])
         for size, p in sorted_files:
-            w.writerow([size, classify(p), p])
+            w.writerow([size, category_label(classify(p)), p])
 
     print(f"บันทึกรายงานแล้ว:\n  {md_path}\n  {csv_path}\n  snapshot: {snap}")
 
@@ -159,6 +171,6 @@ def mode_diff():
     added = data["added"]
     print(f"\n== ไฟล์ใหญ่ใหม่ (ไม่มีใน snapshot เดิม) {min(15, data['added_total'])} จาก {data['added_total']} ==")
     for row in added[:15]:
-        print(f"{gb(row['size'])}  {classify(row['path']):10}  {row['path']}")
+        print(f"{gb(row['size'])}  {category_label(classify(row['path'])):10}  {row['path']}")
     print(f"\nไฟล์ที่หายไป (ใหญ่กว่า {limit_mb} MB): {data['removed']} ไฟล์")
     print("\nหมายเหตุ: diff ไม่ได้บันทึก snapshot ใหม่ ถ้าต้องการจุดเทียบใหม่ให้รัน report")
