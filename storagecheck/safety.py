@@ -3,15 +3,22 @@
 import os
 
 from .config import HOME
+from .i18n import tr
 from .platforms import CACHE, NEVER, trash
 
 
 def classify(path):
+    """คืนรหัสประเภท: never (ห้ามลบ), cache (สร้างใหม่ได้), review (ตรวจก่อน)"""
     if any(k in path for k in NEVER):
-        return "⛔ ห้ามลบ"
+        return "never"
     if any(k in path for k in CACHE):
-        return "🟢 cache"
-    return "🟡 ตรวจก่อน"
+        return "cache"
+    return "review"
+
+
+def category_label(code):
+    """ป้ายที่แสดงให้ผู้ใช้ของรหัสประเภท ตามภาษาปัจจุบัน"""
+    return tr(f"category.{code}")
 
 
 def is_never(path):
@@ -24,6 +31,6 @@ def move_to_trash(paths):
         return True
     for p in paths:
         if not p.startswith(str(HOME) + os.sep) or is_never(p) or not os.path.exists(p):
-            print(f"ปฏิเสธ: {p} (อยู่นอก home, ไม่มีอยู่จริง หรืออยู่ในรายการห้ามลบ)")
+            print(tr("safety.refused", path=p))
             return False
     return trash(paths)

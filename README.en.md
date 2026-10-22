@@ -53,10 +53,18 @@ Items marked ⛔ cannot be selected. Any selected items are moved to the Trash o
 
 > The "not opened for" date uses the time macOS recorded the file was last read. It is an approximation and may not always match your actual use.
 
+## Language
+
+The web UI has a **TH | EN** button in the top right corner. Press it to switch between Thai and English. Every text on the page, including dialogs and the messages the server sends back, follows the chosen language. The browser remembers your choice, and the default is Thai.
+
+The CLI takes `--lang th|en` or the `STORAGECHECK_LANG` variable (which also works with `python3 gui.py` for the terminal messages). The reports in `reports/*.md` and `*.csv` are written in that language. Messages that come from external commands such as `brew` and `docker` stay in the language of that command.
+
+All texts are in `static/locales/th.json` and `en.json`, and both the web UI and Python read the same files. When you change or add a text, edit both files, then run `python3 -m unittest discover tests` to check that the keys match and no Thai text is left behind in the code.
+
 ## CLI
 
 ```bash
-python3 scan.py <mode> [--yes]
+python3 scan.py <mode> [--yes] [--lang th|en]
 ```
 
 | Mode | What it does | Deletes? |
@@ -89,7 +97,7 @@ python3 scan.py duplicates --yes    # move duplicates other than the newest copy
 | 🟡 review first | Ordinary file. Check its last-used date and contents before deleting |
 | ⛔ do not delete | Data you should not touch, such as Docker, iCloud, Photos, or Keychains |
 
-🟡 does not mean safe to delete. Always review it first.
+🟡 does not mean safe to delete. Always review it first. Labels follow the chosen language (in Thai they read ห้ามลบ, ตรวจก่อน and cache).
 
 ## Safety
 
@@ -110,7 +118,7 @@ These can be changed in the web UI under **Settings** and are stored in `setting
 | `old_months` | Months without use before a file counts as unused | 12 |
 | `exclude` | Folders not to scan, written as `~/...` | empty |
 
-Other values, such as `TOP_N`, `SKIP_DIRS`, `NEVER`, and `CACHE`, are in `storagecheck/config.py`.
+Other values, such as `TOP_N` and `SKIP_DIRS`, are in `storagecheck/config.py`. `NEVER` and `CACHE` are in `storagecheck/platforms/macos.py`.
 
 ## Code layout
 
@@ -119,6 +127,8 @@ scan.py                 CLI entry point
 gui.py                  web server and API
 storagecheck/
   config.py             settings, paths, and constants
+  i18n.py               translated texts, read from static/locales
+  platforms/            operating-system-specific code (macOS for now)
   safety.py             labels, protected paths, and moving to the Trash
   walk.py               walking the home folder, file index, large-file scan
   hashing.py            file hashing with caching and parallel hashing
@@ -127,7 +137,8 @@ storagecheck/
   tools.py              developer tools (Docker, Homebrew, conda, pnpm, npm, pip)
   cleanup.py            cache cleanup and interactive mode
   cli.py                dispatches CLI modes
-static/                 web UI (HTML, CSS, ES modules)
+static/                 web UI (HTML, CSS, ES modules) and locales/ (th/en texts)
+tests/                  tests (python3 -m unittest discover tests)
 ```
 
 To add a new CLI mode, write the function in the relevant module, then add the call in `storagecheck/cli.py`.

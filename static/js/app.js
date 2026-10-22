@@ -1,8 +1,10 @@
 /* จุดเริ่มต้นของหน้าเว็บ: ผูกปุ่มต่าง ๆ เข้ากับโมดูลที่เกี่ยวข้อง */
 
+import { t } from "./i18n.js";
 import { $ } from "./dom.js";
 import { state } from "./state.js";
 import { openSheet, initSheet } from "./sheet.js";
+import { renderCards } from "./cards.js";
 import { trashSelected } from "./trash.js";
 import { runScan, loadLast } from "./scan.js";
 import { saveReport, compareSelected, weeklySummary, loadSnapshots, initCompare } from "./compare.js";
@@ -21,11 +23,11 @@ $("scan-btn").onclick = runScan;
 $("cache-btn").onclick = () => {
   if (!state.scanned) return;
   openSheet({
-    title: "แคชของแอป",
-    sub: "เลือกรายการที่ต้องการลบ แอปจะสร้างแคชขึ้นมาใหม่เองเมื่อใช้งาน",
+    title: () => t("card.cache.title"),
+    sub: () => t("sheet.cache_sub"),
     mode: "list",
     items: () => state.cache,
-    action: "ย้ายไปถังขยะ",
+    action: () => t("common.move_to_trash"),
     onAction: () => trashSelected((paths) => {
       state.cache = state.cache.filter(x => !paths.includes(x.path));
     }),
@@ -35,11 +37,11 @@ $("cache-btn").onclick = () => {
 $("big-btn").onclick = () => {
   if (!state.scanned) return;
   openSheet({
-    title: "ไฟล์ขนาดใหญ่",
-    sub: "ตรวจให้แน่ใจก่อนลบ ไฟล์เหล่านี้อาจเป็นงานหรือข้อมูลที่ยังต้องใช้",
+    title: () => t("card.big.title"),
+    sub: () => t("sheet.big_sub"),
     mode: "list",
-    items: () => state.files.filter(x => x.category.includes("ตรวจก่อน")),
-    action: "ย้ายไปถังขยะ",
+    items: () => state.files.filter(x => x.category === "review"),
+    action: () => t("common.move_to_trash"),
     onAction: () => trashSelected((paths) => {
       state.files = state.files.filter(x => !paths.includes(x.path));
     }),
@@ -54,7 +56,8 @@ $("report-btn").onclick = saveReport;
 $("diff-btn").onclick = compareSelected;
 $("weekly-btn").onclick = weeklySummary;
 
-/* เริ่มต้น: โหลดค่าตั้งค่า ผลสแกนเดิม และรายการ snapshot */
+/* เริ่มต้น: วาดข้อความเริ่มต้น โหลดค่าตั้งค่า ผลสแกนเดิม และรายการ snapshot */
+renderCards();
 loadSettings();
 loadLast();
 loadSnapshots();

@@ -3,6 +3,7 @@
 import { $, fmt, setBusy } from "./dom.js";
 import { api } from "./api.js";
 import { state } from "./state.js";
+import { t } from "./i18n.js";
 import { selectedPaths, renderList, updateSheetSum } from "./sheet.js";
 import { renderCards } from "./cards.js";
 import { alertBox, confirmBox } from "./dialog.js";
@@ -12,27 +13,26 @@ export async function trashSelected(afterRemove) {
   if (!paths.length) return;
   const items = state.sheet.items().filter(x => paths.includes(x.path));
   const size = items.reduce((a, x) => a + x.size, 0);
+  const vars = { n: paths.length, size: fmt(size) };
 
-  const ok = await confirmBox(
-    `จะย้าย ${paths.length} รายการ (${fmt(size)}) ไปถังขยะ\n\nกู้คืนได้จากถังขยะ`,
-    { title: "ย้ายไปถังขยะ", confirmLabel: "ย้ายไปถังขยะ", danger: true });
+  const ok = await confirmBox(t("trash.confirm", vars),
+    { title: t("common.move_to_trash"), confirmLabel: t("common.move_to_trash"), danger: true });
   if (!ok) return;
 
   $("sheet-action").disabled = true;
-  setBusy(true, `กำลังย้าย ${paths.length} รายการไปถังขยะ...`);
+  setBusy(true, t("trash.busy", vars));
   try {
     const r = await api("/api/trash", { paths });
     if (!r.ok) {
-      await alertBox(r.output, { title: "ย้ายไม่สำเร็จ", tone: "warn" });
+      await alertBox(r.output, { title: t("trash.failed_title"), tone: "warn" });
       return;
     }
     afterRemove(paths);
     renderList();
     renderCards();
-    await alertBox(`ย้าย ${paths.length} รายการไปถังขยะแล้ว (รวม ${fmt(size)})\nกู้คืนได้จากถังขยะ`,
-                   { title: "ย้ายแล้ว", tone: "ok" });
+    await alertBox(t("trash.done", vars), { title: t("trash.done_title"), tone: "ok" });
   } catch (e) {
-    await alertBox("เกิดข้อผิดพลาด: " + e.message, { title: "ย้ายไม่สำเร็จ", tone: "error" });
+    await alertBox(t("error.with_message", { message: e.message }), { title: t("trash.failed_title"), tone: "error" });
   } finally {
     setBusy(false);
     updateSheetSum();

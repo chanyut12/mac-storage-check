@@ -2,6 +2,7 @@
 
 import { $, esc } from "./dom.js";
 import { api } from "./api.js";
+import { t } from "./i18n.js";
 import { alertBox, confirmBox } from "./dialog.js";
 
 function showBrewUpgradeButton() {
@@ -10,50 +11,47 @@ function showBrewUpgradeButton() {
 }
 
 async function onBrewUpgrade() {
-  const ok = await confirmBox(
-    "จะอัปเดตแพ็กเกจ Homebrew ที่ล้าสมัยทั้งหมด (brew upgrade)\n\n" +
-    "อาจใช้เวลานาน แพ็กเกจที่ต้องใช้รหัสผ่านผู้ดูแลระบบอาจอัปเดตไม่สำเร็จ",
-    { title: "อัปเดตแพ็กเกจ Homebrew", confirmLabel: "อัปเดต", danger: true });
+  const ok = await confirmBox(t("tools.brew_confirm"),
+    { title: t("tools.brew_title"), confirmLabel: t("tools.brew_label"), danger: true });
   if (!ok) return;
-  $("sheet-text").innerHTML = `<div class="empty">กำลังอัปเดต... อาจใช้เวลาหลายนาที</div>`;
+  $("sheet-text").innerHTML = `<div class="empty">${esc(t("tools.brew_busy"))}</div>`;
   try {
     const r = await api("/api/brew_upgrade", { apply: true });
-    $("sheet-text").innerHTML = `<pre class="out">${esc(r.output || "เสร็จแล้ว")}</pre>`;
+    $("sheet-text").innerHTML = `<pre class="out">${esc(r.output || t("tools.done"))}</pre>`;
   } catch (e) {
-    await alertBox("เกิดข้อผิดพลาด: " + e.message, { title: "อัปเดตไม่สำเร็จ", tone: "error" });
+    await alertBox(t("error.with_message", { message: e.message }), { title: t("tools.brew_failed_title"), tone: "error" });
   }
 }
 
 export const toolsSheet = {
-  title: "เครื่องมือนักพัฒนา",
-  sub: "นี่คือพื้นที่ที่คืนได้ตามคำสั่งของแต่ละเครื่องมือ ยังไม่มีอะไรถูกลบหรืออัปเดตจนกว่าจะกดปุ่ม",
+  title: () => t("card.tools.title"),
+  sub: () => t("tools.sheet_sub"),
   mode: "text",
   load: async () => {
-    $("sheet-text").innerHTML = `<div class="empty">กำลังตรวจ...</div>`;
+    $("sheet-text").innerHTML = `<div class="empty">${esc(t("tools.checking"))}</div>`;
     const [tools, brew] = await Promise.all([
       api("/api/tools", { apply: false }),
       api("/api/brew_upgrade", { apply: false }),
     ]);
     $("sheet-text").innerHTML = `
-      <pre class="out">${esc(tools.output || "(ไม่มีข้อมูล)")}</pre>
-      <p><strong>Homebrew: แพ็กเกจที่ล้าสมัย</strong></p>
-      <pre class="out">${esc(brew.output || "(ไม่มีข้อมูล)")}</pre>
-      ${brew.outdated ? `<div class="actions"><button class="btn quiet" id="brew-upgrade-btn">อัปเดตแพ็กเกจ Homebrew</button></div>` : ""}`;
+      <pre class="out">${esc(tools.output || t("tools.no_data"))}</pre>
+      <p><strong>${esc(t("tools.brew_outdated"))}</strong></p>
+      <pre class="out">${esc(brew.output || t("tools.no_data"))}</pre>
+      ${brew.outdated ? `<div class="actions"><button class="btn quiet" id="brew-upgrade-btn">${esc(t("tools.brew_button"))}</button></div>` : ""}`;
     showBrewUpgradeButton();
   },
-  action: "เคลียร์ตามที่แสดง",
+  action: () => t("tools.action"),
   onAction: async () => {
-    const ok = await confirmBox(
-      "จะเคลียร์แคชของ Docker, Homebrew, conda, pnpm, npm และ pip\n\nDocker volumes จะไม่ถูกแตะ",
-      { title: "เคลียร์แคชของเครื่องมือนักพัฒนา", confirmLabel: "เคลียร์", danger: true });
+    const ok = await confirmBox(t("tools.clean_confirm"),
+      { title: t("tools.clean_title"), confirmLabel: t("tools.clean_label"), danger: true });
     if (!ok) return;
     $("sheet-action").disabled = true;
-    $("sheet-text").innerHTML = `<div class="empty">กำลังเคลียร์...</div>`;
+    $("sheet-text").innerHTML = `<div class="empty">${esc(t("tools.cleaning"))}</div>`;
     try {
       const r = await api("/api/tools", { apply: true });
-      $("sheet-text").innerHTML = `<pre class="out">${esc(r.output || "เสร็จแล้ว")}</pre>`;
+      $("sheet-text").innerHTML = `<pre class="out">${esc(r.output || t("tools.done"))}</pre>`;
     } catch (e) {
-      await alertBox("เกิดข้อผิดพลาด: " + e.message, { title: "เคลียร์ไม่สำเร็จ", tone: "error" });
+      await alertBox(t("error.with_message", { message: e.message }), { title: t("tools.clean_failed_title"), tone: "error" });
     }
     $("sheet-action").hidden = true;
   },

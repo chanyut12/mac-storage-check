@@ -17,12 +17,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import scan
+from storagecheck.i18n import set_lang, tr
 from storagecheck.platforms import disk_bytes, is_link_path, reveal
 
 PORT = int(os.environ.get("STORAGECHECK_PORT", "8765"))
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 MIME = {".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8",
-        ".js": "text/javascript; charset=utf-8"}
+        ".js": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8"}
 LOCK = threading.Lock()          # ทำงานทีละงาน เพราะ scan.py พิมพ์ผลลง stdout
 
 
@@ -34,14 +35,38 @@ def capture(fn, *args):
     return buf.getvalue()
 
 
+class ApiError(Exception):
+    """ข้อผิดพลาดที่ผู้ใช้ควรเห็น: เก็บรหัสข้อความและตัวแปร แปลตามภาษาของคำขอตอนตอบกลับ"""
+
+    def __init__(self, code, **vars):
+        super().__init__(code)
+        self.code = code
+        self.vars = vars
+
+
+def fail(code, **vars):
+    """ผลล้มเหลวมาตรฐาน: รหัส ตัวแปร และข้อความที่แปลแล้ว (ใส่ทั้ง message และ output ที่หน้าเว็บเดิมอ่าน)"""
+    text = tr(code, **vars)
+    return {"ok": False, "code": code, "vars": vars, "message": text, "output": text}
+
+
+def capture_result(fn, *args):
+    """เหมือน capture แต่คืน (ค่าที่ฟังก์ชันคืนมา, ข้อความที่พิมพ์)"""
+    buf = io.StringIO()
+    with LOCK, contextlib.redirect_stdout(buf):
+        result = fn(*args)
+    return result, buf.getvalue()
+
+
+# รหัสประเภทไฟล์ ป้ายที่แสดงอยู่ฝั่งหน้าเว็บ (static/js/labels.js)
 KIND_BY_EXT = {
-    "วิดีโอ": {"mov", "mp4", "mkv", "avi", "m4v", "webm"},
-    "ไฟล์บีบอัด": {"zip", "rar", "7z", "tar", "gz", "tgz", "xz", "bz2"},
-    "disk image": {"dmg", "iso", "img", "pkg"},
-    "ข้อมูล": {"csv", "db", "sqlite", "xlsx", "xls", "json", "parquet", "pkl", "npy", "h5", "sav", "dta"},
-    "โมเดล AI": {"pt", "pth", "safetensors", "gguf", "onnx", "ckpt"},
-    "เอกสาร": {"pdf", "doc", "docx", "ppt", "pptx", "txt", "md", "pages", "key", "numbers"},
-    "รูปภาพ": {"png", "jpg", "jpeg", "heic", "gif", "webp", "tiff", "raw"},
+    "video": {"mov", "mp4", "mkv", "avi", "m4v", "webm"},
+    "archive": {"zip", "rar", "7z", "tar", "gz", "tgz", "xz", "bz2"},
+    "disk_image": {"dmg", "iso", "img", "pkg"},
+    "data": {"csv", "db", "sqlite", "xlsx", "xls", "json", "parquet", "pkl", "npy", "h5", "sav", "dta"},
+    "ai_model": {"pt", "pth", "safetensors", "gguf", "onnx", "ckpt"},
+    "document": {"pdf", "doc", "docx", "ppt", "pptx", "txt", "md", "pages", "key", "numbers"},
+    "image": {"png", "jpg", "jpeg", "heic", "gif", "webp", "tiff", "raw"},
 }
 
 
@@ -50,7 +75,7 @@ def kind_of(path):
     for name, exts in KIND_BY_EXT.items():
         if ext in exts:
             return name
-    return "อื่น ๆ"
+    return "other"
 
 
 def item(size, path, atime=None):
@@ -98,7 +123,7 @@ def api_settings(body):
             if key in body:
                 v = int(body[key])
                 if not lo <= v <= hi:
-                    raise ValueError(f"{key} ต้องอยู่ระหว่าง {lo} ถึง {hi}")
+                    raise ApiError("api.settings.range", field=tr(f"settings.field.{key}"), lo=lo, hi=hi)
                 s[key] = v
         scan.save_settings(s)
         scan.clear_last_scan()
@@ -110,7 +135,7 @@ def api_exclude(body):
     home = os.path.realpath(scan.HOME)
     path = os.path.realpath(body.get("path", ""))
     if path == home or not path.startswith(home + os.sep):
-        raise ValueError("ยกเว้นได้เฉพาะโฟลเดอร์ย่อยใน home")
+        raise ApiError("api.exclude.only_subfolders")
     entry = "~" + path[len(home):]
     s = scan.load_settings()
     if body.get("remove"):
@@ -134,11 +159,11 @@ def api_diff(body):
     """เทียบกับ snapshot ที่เลือก (ถ้าไม่ระบุ ใช้ตัวล่าสุด) คืนเป็นโครงสร้างข้อมูล"""
     name = body.get("snapshot")
     if name and name not in {s["name"] for s in scan.list_snapshots()}:
-        raise ValueError("ไม่พบ snapshot นี้")
+        raise ApiError("api.snapshot.not_found")
     with LOCK:
         data = scan.diff_data(str(scan.SNAP_DIR / name) if name else None)
     if data is None:
-        return {"ok": False, "message": "ยังไม่มี snapshot ให้กดบันทึกรายงานก่อน"}
+        return fail("api.snapshot.none")
     return {"ok": True, **data}
 
 
@@ -146,7 +171,7 @@ def api_weekly(_body):
     """เทียบกับ snapshot ที่เก่ากว่า 7 วัน (ใหม่ที่สุดในกลุ่มนั้น)"""
     snap = scan.weekly_snapshot()
     if snap is None:
-        return {"ok": False, "message": "ยังไม่มี snapshot ที่เก่ากว่า 7 วัน กดบันทึกรายงานไว้ตอนนี้ แล้วกลับมาดูสรุปหลังผ่านไป 7 วัน"}
+        return fail("api.weekly.none")
     with LOCK:
         data = scan.diff_data(str(snap))
     days = (datetime.now() - datetime.fromisoformat(data["time"])).days
@@ -172,7 +197,7 @@ def api_children(body):
     home = os.path.realpath(scan.HOME)
     path = os.path.realpath(body.get("path") or home)
     if (path != home and not path.startswith(home + os.sep)) or not os.path.isdir(path):
-        raise ValueError("เปิดดูไม่ได้: ไม่อยู่ใน home หรือไม่ใช่โฟลเดอร์")
+        raise ApiError("api.browse.not_allowed")
     sizes = scan.dir_sizes()    # ใช้ดัชนีจากการสแกนล่าสุดถ้ามี จะได้ไม่ต้องเดินโฟลเดอร์ซ้ำทุกคลิก
     rows = []
     for name in os.listdir(path):
@@ -200,7 +225,7 @@ def api_reveal(body):
     """เปิด Finder ไปที่ไฟล์หรือโฟลเดอร์นั้น (เฉพาะใน home และมีอยู่จริง)"""
     path = body.get("path", "")
     if not path.startswith(str(scan.HOME) + os.sep) or not os.path.exists(path):
-        return {"ok": False, "output": "เปิดไม่ได้: ไม่อยู่ใน home หรือไม่มีอยู่จริง"}
+        return fail("api.reveal.not_allowed")
     reveal(path)
     return {"ok": True, "output": ""}
 
@@ -223,7 +248,7 @@ def api_folder_duplicates(_body):
         groups = scan.find_folder_duplicates(scan.cached_rows())
     items = []
     for gi, (size, paths, keep) in enumerate(groups):
-        items += [{**item(size, p), "kind": "โฟลเดอร์", "keep": p == keep, "group": gi} for p in paths]
+        items += [{**item(size, p), "kind": "folder", "keep": p == keep, "group": gi} for p in paths]
     return {"items": items}
 
 
@@ -231,18 +256,18 @@ def api_snapshot_delete(body):
     """ย้าย snapshot หนึ่งไฟล์ไปถังขยะ (รายงาน .md/.csv ไม่ถูกลบ)"""
     name = body.get("snapshot")
     if name not in {s["name"] for s in scan.list_snapshots()}:
-        raise ValueError("ไม่พบ snapshot นี้")
-    output = capture(scan.move_to_trash, [str(scan.SNAP_DIR / name)])
-    return {"ok": "ปฏิเสธ" not in output, "output": output}
+        raise ApiError("api.snapshot.not_found")
+    ok, output = capture_result(scan.move_to_trash, [str(scan.SNAP_DIR / name)])
+    return {"ok": bool(ok), "output": output}
 
 
 def api_trash(body):
     paths = body.get("paths") or []
     if not paths:
-        return {"ok": False, "output": "ไม่ได้เลือกรายการ"}
-    output = capture(scan.move_to_trash, paths)
+        return fail("api.trash.none_selected")
+    ok, output = capture_result(scan.move_to_trash, paths)
     scan.clear_index()      # ไฟล์ที่ย้ายไปแล้วต้องไม่ค้างในดัชนี
-    return {"ok": "ปฏิเสธ" not in output, "output": output or "ย้ายไปถังขยะแล้ว"}
+    return {"ok": bool(ok), "output": output or tr("api.trash.done")}
 
 
 ROUTES = {
@@ -292,28 +317,33 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, target.read_bytes(), ctype)
 
     def do_POST(self):
-        route = ROUTES.get(self.path)
-        if route is None:
-            return self._send(404, b'{"error":"not found"}', "application/json")
         length = int(self.headers.get("Content-Length", 0))
         try:
             body = json.loads(self.rfile.read(length) or b"{}")
-            result, code = route(body), 200
-        except Exception as e:  # ส่งข้อความผิดพลาดกลับไปให้หน้าเว็บแสดง
-            result, code = {"error": str(e)}, 500
+            set_lang(body.pop("lang", None))        # ภาษาของคำขอนี้ ไม่ให้ปนเข้าไปในข้อมูลของ route
+            route = ROUTES.get(self.path)
+            if route is None:
+                result, code = {"error": tr("error.not_found"), "code": "error.not_found", "vars": {}}, 404
+            else:
+                result, code = route(body), 200
+        except ApiError as e:
+            result, code = {"error": tr(e.code, **e.vars), "code": e.code, "vars": e.vars}, 400
+        except Exception as e:  # ข้อผิดพลาดที่ไม่คาดคิด: ส่งข้อความกลาง (แปลแล้ว) ส่วนรายละเอียดอยู่ใน detail
+            result, code = {"error": tr("error.internal"), "code": "error.internal", "vars": {}, "detail": str(e)}, 500
         self._send(code, json.dumps(result, ensure_ascii=False).encode("utf-8"),
                    "application/json; charset=utf-8")
 
 
 def main():
+    set_lang(os.environ.get("STORAGECHECK_LANG"))       # ภาษาของข้อความในเทอร์มินัล (หน้าเว็บส่งภาษามากับแต่ละคำขอ)
     server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
     url = f"http://127.0.0.1:{PORT}/"
-    print(f"เปิด Storage Check ที่ {url}  (กด Ctrl+C เพื่อปิด)")
+    print(tr("cli.gui_open", url=url))
     threading.Timer(0.5, lambda: webbrowser.open(url)).start()
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\nปิดแล้ว")
+        print("\n" + tr("cli.gui_closed"))
     finally:
         server.server_close()
 

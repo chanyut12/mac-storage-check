@@ -3,6 +3,8 @@
 import os
 import subprocess
 
+from ..i18n import tr
+
 
 # ข้อมูลที่ห้ามลบ (ตรวจทุกโหมด)
 NEVER = ("/Containers/com.docker", "/Mobile Documents/", "Photos Library", "/Keychains/")
@@ -35,7 +37,7 @@ def trash(paths):
     script = f'tell application "Finder" to delete {{{items}}}'
     r = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
     if r.returncode:
-        print("ย้ายไปถังขยะไม่สำเร็จ:", r.stderr.strip())
+        print(tr("trash.failed", error=r.stderr.strip()))
         return False
     return True
 

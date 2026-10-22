@@ -12,90 +12,94 @@
 <div class="wrap">
 
   <div class="hero">
-    <h1>พื้นที่เครื่องคุณ</h1>
-    <p id="summary">กดปุ่มด้านล่างเพื่อตรวจหาพื้นที่ที่คืนได้</p>
+    <div class="lang" role="group" data-i18n-aria-label="lang.switch">
+      <button type="button" data-lang="th">TH</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+    <h1 data-i18n="hero.title"></h1>
+    <p id="summary"></p>
     <div class="disk" id="disk" hidden>
       <div class="meter"><span id="meter"></span></div>
       <div class="meter-labels"><span id="used-label"></span><span id="free-label"></span></div>
-      <p class="disk-note"><span aria-hidden="true">ⓘ</span> ค่า "ว่าง" คือพื้นที่ที่ใช้ได้ทันที macOS อาจแสดงมากกว่านี้ เพราะนับแคชที่ระบบลบให้เองได้เมื่อจำเป็นด้วย</p>
+      <p class="disk-note"><span aria-hidden="true">ⓘ</span> <span data-i18n="disk.note"></span></p>
     </div>
   </div>
 
   <div class="primary">
-    <button class="btn big" id="scan-btn">ตรวจหาพื้นที่ที่คืนได้</button>
+    <button class="btn big" id="scan-btn"></button>
   </div>
 
   <div class="cards" id="cards" hidden>
     <section class="card safe">
       <div class="icon">🧹</div>
-      <h2>แคชของแอป</h2>
+      <h2 data-i18n="card.cache.title"></h2>
       <div class="size" id="cache-size">–</div>
-      <p class="desc">ไฟล์ชั่วคราวที่แอปสร้างขึ้นเอง ลบได้ และจะถูกสร้างใหม่เมื่อใช้งาน</p>
-      <button class="btn" id="cache-btn">ดูและลบ</button>
+      <p class="desc" data-i18n="card.cache.desc"></p>
+      <button class="btn" id="cache-btn" data-i18n="card.cache.btn"></button>
     </section>
 
     <section class="card">
       <div class="icon">🎬</div>
-      <h2>ไฟล์ขนาดใหญ่</h2>
+      <h2 data-i18n="card.big.title"></h2>
       <div class="size" id="big-size">–</div>
-      <p class="desc">วิดีโอ ไฟล์ข้อมูล และไฟล์ดาวน์โหลดที่มีขนาดตั้งแต่ 100 MB ควรตรวจก่อนลบ</p>
-      <button class="btn" id="big-btn">ดูรายการ</button>
+      <p class="desc" data-i18n="card.big.desc"></p>
+      <button class="btn" id="big-btn" data-i18n="card.big.btn"></button>
     </section>
 
     <section class="card">
       <div class="icon">🛠️</div>
-      <h2>เครื่องมือนักพัฒนา</h2>
-      <div class="size" id="tools-size">ดูก่อนได้</div>
-      <p class="desc">Docker, Homebrew, conda, pnpm, npm และ pip ระบบจะแสดงคำสั่งที่จะรันก่อนเสมอ ไม่แตะ Docker volumes</p>
-      <button class="btn" id="tools-btn">ดูและเคลียร์</button>
+      <h2 data-i18n="card.tools.title"></h2>
+      <div class="size" id="tools-size" data-i18n="card.tools.size"></div>
+      <p class="desc" data-i18n="card.tools.desc"></p>
+      <button class="btn" id="tools-btn" data-i18n="card.tools.btn"></button>
     </section>
 
     <section class="card">
       <div class="icon">📑</div>
-      <h2>ไฟล์ซ้ำ</h2>
+      <h2 data-i18n="card.dups.title"></h2>
       <div class="size" id="dups-size">–</div>
-      <p class="desc">ไฟล์ที่เนื้อหาเหมือนกันทุกไบต์ตั้งแต่ 10 MB ขึ้นไป ระบบเก็บฉบับที่แก้ไขล่าสุดไว้ให้เสมอ</p>
-      <button class="btn" id="dups-btn">ค้นหาและดู</button>
+      <p class="desc" data-i18n="card.dups.desc"></p>
+      <button class="btn" id="dups-btn" data-i18n="card.search_view"></button>
     </section>
 
     <section class="card">
       <div class="icon">🗂️</div>
-      <h2>โฟลเดอร์ซ้ำ</h2>
+      <h2 data-i18n="card.fdups.title"></h2>
       <div class="size" id="fdups-size">–</div>
-      <p class="desc">โฟลเดอร์ที่ไฟล์ข้างในเหมือนกันทั้งหมด ระบบเก็บโฟลเดอร์ที่แก้ไขล่าสุดไว้ให้เสมอ</p>
-      <button class="btn" id="fdups-btn">ค้นหาและดู</button>
+      <p class="desc" data-i18n="card.fdups.desc"></p>
+      <button class="btn" id="fdups-btn" data-i18n="card.search_view"></button>
     </section>
   </div>
 
   <details class="more" id="more">
-    <summary>ตัวเลือกเพิ่มเติม</summary>
+    <summary data-i18n="more.summary"></summary>
     <div class="more-body">
-      <h3>โฟลเดอร์ที่ใช้พื้นที่มากที่สุด</h3>
+      <h3 data-i18n="more.folders"></h3>
       <div id="folders"></div>
 
-      <h3 class="spaced">บันทึกและเปรียบเทียบ</h3>
+      <h3 class="spaced" data-i18n="more.compare"></h3>
       <div class="actions">
-        <button class="btn quiet" id="report-btn">บันทึกรายงาน</button>
+        <button class="btn quiet" id="report-btn" data-i18n="compare.save"></button>
         <button class="btn quiet" id="snap-pick" aria-haspopup="dialog"></button>
-        <button class="btn quiet" id="snap-delete">ลบ snapshot นี้</button>
-        <button class="btn quiet" id="diff-btn">เทียบกับจุดที่เลือก</button>
-        <button class="btn quiet" id="weekly-btn">สรุปรายสัปดาห์</button>
+        <button class="btn quiet" id="snap-delete" data-i18n="compare.delete"></button>
+        <button class="btn quiet" id="diff-btn" data-i18n="compare.diff"></button>
+        <button class="btn quiet" id="weekly-btn" data-i18n="compare.weekly"></button>
       </div>
       <pre class="out" id="compare-out" hidden></pre>
       <div id="diff-out" hidden></div>
 
-      <h3 class="spaced">ตั้งค่า</h3>
+      <h3 class="spaced" data-i18n="more.settings"></h3>
       <div class="settings">
-        <label>ไฟล์ใหญ่ตั้งแต่ <input type="number" id="set-min" min="1" max="10240"> MB</label>
-        <label>ไฟล์ซ้ำตั้งแต่ <input type="number" id="set-dup" min="1" max="10240"> MB</label>
-        <label>ถือว่าเก่าเมื่อไม่ได้เปิดเกิน <input type="number" id="set-old" min="1" max="120"> เดือน</label>
+        <label><span data-i18n="settings.min_pre"></span> <input type="number" id="set-min" min="1" max="10240"> <span data-i18n="settings.unit_mb"></span></label>
+        <label><span data-i18n="settings.dup_pre"></span> <input type="number" id="set-dup" min="1" max="10240"> <span data-i18n="settings.unit_mb"></span></label>
+        <label><span data-i18n="settings.old_pre"></span> <input type="number" id="set-old" min="1" max="120"> <span data-i18n="settings.unit_months"></span></label>
         <div class="actions">
-          <button class="btn quiet" id="set-save">บันทึกการตั้งค่า</button>
+          <button class="btn quiet" id="set-save" data-i18n="settings.save"></button>
           <span class="note" id="set-msg"></span>
         </div>
       </div>
 
-      <h3 class="spaced">โฟลเดอร์ที่ยกเว้นจากการตรวจ</h3>
+      <h3 class="spaced" data-i18n="more.excluded"></h3>
       <div id="excluded"></div>
     </div>
   </details>
@@ -108,9 +112,9 @@
       <p id="sheet-sub"></p>
     </header>
     <div class="toolbar" id="sheet-toolbar" hidden>
-      <input type="search" id="sheet-search" placeholder="ค้นหาชื่อหรือที่อยู่ไฟล์">
-      <button class="btn ghost" id="sheet-all">เลือกทั้งหมด</button>
-      <button class="btn ghost" id="sheet-csv">ส่งออก CSV</button>
+      <input type="search" id="sheet-search" data-i18n-placeholder="sheet.search">
+      <button class="btn ghost" id="sheet-all" data-i18n="sheet.select_all"></button>
+      <button class="btn ghost" id="sheet-csv" data-i18n="sheet.csv"></button>
     </div>
     <div class="chips" id="sheet-chips" hidden></div>
     <div class="list" id="sheet-list" hidden></div>
@@ -118,7 +122,7 @@
     <footer>
       <span class="sum" id="sheet-sum"></span>
       <div class="buttons">
-        <button class="btn quiet" id="sheet-close">ปิด</button>
+        <button class="btn quiet" id="sheet-close" data-i18n="common.close"></button>
         <button class="btn danger" id="sheet-action" hidden></button>
       </div>
     </footer>
